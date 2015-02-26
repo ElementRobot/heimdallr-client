@@ -13,11 +13,14 @@ var gulp = require('gulp'),
 
 
 // Browserify
-for(var key in watchify.args){
-    // Add in watchify args
-    browserifyArgs[key] = watchify.args[key];
+if(process.env.DEV){
+    console.warn('WARN: Local paths will be included in build');
+    for(var key in watchify.args){
+        // Add in watchify args
+        browserifyArgs[key] = watchify.args[key];
+    }
 }
-bundler = watchify(browserify('./index.js', watchify.args));
+bundler = watchify(browserify('./index.js', browserifyArgs));
 // add any other browserify options or transforms here
 bundler.transform('brfs');
 
