@@ -7,10 +7,16 @@ var gulp = require('gulp'),
     browserify = require('browserify'),
     uglify = require('gulp-uglify'),
     rename = require('gulp-rename'),
+    derequire = require('gulp-derequire'),
+    browserifyArgs = {'standalone': 'heimdallr-client'},
     bundler;
 
 
 // Browserify
+for(var key in watchify.args){
+    // Add in watchify args
+    browserifyArgs[key] = watchify.args[key];
+}
 bundler = watchify(browserify('./index.js', watchify.args));
 // add any other browserify options or transforms here
 bundler.transform('brfs');
@@ -27,6 +33,7 @@ function js() {
     // log errors if they happen
     .on('error', gutil.log.bind(gutil, 'Browserify Error'))
     .pipe(source('heimdallr-client.js'))
+    .pipe(derequire())
     .pipe(buffer())
     .pipe(gulp.dest('./build'))
     .pipe(sourcemaps.init({loadMaps: true})) // loads map from browserify file

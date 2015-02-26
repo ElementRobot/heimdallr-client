@@ -1,2 +1,1 @@
-var heimdallrClient = require('./lib/heimdallr-client.js');
-module.exports = heimdallrClient;
+module.exports = require('./lib/heimdallr-client.js');
