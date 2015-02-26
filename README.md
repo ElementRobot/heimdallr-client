@@ -1,27 +1,36 @@
-# heimdallr-client
+# Heimdallr-Client
 ## Overview
 Heimdallr is a system built on top of socket.io for transferring and storing data in real-time. It connects a network of providers to a network of consumers. A provider is a source of data or information. The provider sends that information to the Heimdallr server. The Heimdallr server stores that information and relays it to any consumers that are currently subscribed to that particular provider. If you would like to get started, request an authentication token by emailing [us](mailto:heimdallr@elementrobot.com)
 
 ## Usage
-First install [node](http://nodejs.org/) and [bower](http://bower.io/) if you don't already have them. Then install heimdallr-client:
+### In the browser
+First install [bower](http://bower.io/) if you don't already have it. Then grab the package using bower:
 
 ```bash
 bower install heimdallr-client --save
 ```
 
-Example usage in Node:
-
-```javascript
-var heimdallrClient = require('path/to/bower_components/heimdallr-client/heimdallr-client.js');
-```
-
-To use in the browser, `module` must be undefined. Example usage in browser:
+Then include a script tag with your HTML:
 
 ```html
-<script src="path/to/bower_components/heimdallr-client/heimdallr-client.js"></script>
+<script src="path/to/bower_components/heimdallr-client/build/heimdallr-client.min.js"></script>
 ```
 
-Example provider usage:
+### In node
+Install [node](http://nodejs.org/) if you don't have it. Then grab the package using npm:
+
+```bash
+npm install heimdallr-client --save
+```
+
+Then you just need to use require to include the module in your script:
+
+```javascript
+var heimdallrClient = require('heimdallr-client');
+```
+
+## Examples
+### Provider
 
 ```javascript
 var provider = new heimdallrClient.Provider(providerAuthToken);
@@ -49,7 +58,7 @@ provider.sendStream(new Uint8Array());
 provider.completed(uuidOfControl);
 ```
 
-Example consumer usage:
+### Consumer
 
 ```javascript
 var consumer = new heimdallrClient.Consumer(consumerAuthToken);
