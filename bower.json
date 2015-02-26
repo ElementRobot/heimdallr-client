@@ -1,0 +1,35 @@
+{
+  "name": "heimdallr-client",
+  "version": "0.0.0",
+  "homepage": "https://github.com/ElementRobot/heimdallr-client",
+  "authors": [
+    "John Feusi jf@elementrobot.com",
+    "Jon Staab staab@elementrobot.com",
+    "Chris Walker cw@elementrobot.com"
+  ],
+  "description": "Client package for Heimdallr",
+  "keywords": [
+    "heimdallr",
+    "rtc",
+    "websockets"
+  ],
+  "license": "MIT",
+  "main": "src/heimdallr-client.js",
+  "moduleType": [
+    "node"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "tests",
+    "build"
+  ],
+  "dependencies": {
+    "socket.io-client": "~1.3.4"
+  },
+  "repositories": {
+    "type": "git",
+    "url": "https://github.com/ElementRobot/heimdallr-client"
+  }
+}

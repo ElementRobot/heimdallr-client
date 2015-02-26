@@ -1,0 +1,8 @@
+bower_components
+build
+docs
+examples
+node_modules
+tests
+bower.json
+gulpfile.js
