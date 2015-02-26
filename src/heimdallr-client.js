@@ -95,9 +95,7 @@ Consumer = (function(){
             filter = filter || {};
             if(!(filter.event instanceof Array) && !(filter.data instanceof Array)){
                 throw new Error(
-                    'Invalid filter. Keys accepted: `data`, `event`. ' +
-                    'Each must be an array of acceptable names. ' +
-                    'You may provide one or both.'
+                    'Invalid filter'
                 );
             }
             this.connection.emit('setFilter', {provider: uuid, filter: filter});

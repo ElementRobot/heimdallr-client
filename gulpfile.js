@@ -1,26 +1,37 @@
-var gulp = require('gulp');
-var gutil = require('gulp-util');
-var sourcemaps = require('gulp-sourcemaps');
-var source = require('vinyl-source-stream');
-var buffer = require('vinyl-buffer');
-var watchify = require('watchify');
-var browserify = require('browserify');
+var gulp = require('gulp'),
+    gutil = require('gulp-util'),
+    sourcemaps = require('gulp-sourcemaps'),
+    source = require('vinyl-source-stream'),
+    buffer = require('vinyl-buffer'),
+    watchify = require('watchify'),
+    browserify = require('browserify'),
+    uglify = require('gulp-uglify'),
+    rename = require('gulp-rename'),
+    bundler;
+
 
 // Browserify
-var bundler = watchify(browserify('./src/heimdallr-client.js', watchify.args).exclude('socket.io-client'));
+bundler = watchify(browserify('./src/heimdallr-client.js', watchify.args));
 // add any other browserify options or transforms here
 bundler.transform('brfs');
 
-gulp.task('default', bundle);
-bundler.on('update', bundle); // on any dep update, runs the bundler
+gulp.task('default', ['js'], function(){
+    // Hack because gulp wasn't exiting
+    setTimeout(process.exit.bind(0));
+});
+gulp.task('js', js);
+bundler.on('update', js); // on any dep update, runs the bundler
 
-function bundle() {
+function js() {
   return bundler.bundle()
     // log errors if they happen
     .on('error', gutil.log.bind(gutil, 'Browserify Error'))
     .pipe(source('heimdallr-client.js'))
     .pipe(buffer())
+    .pipe(gulp.dest('./build'))
     .pipe(sourcemaps.init({loadMaps: true})) // loads map from browserify file
+    .pipe(uglify())
     .pipe(sourcemaps.write('./')) // writes .map file
+    .pipe(rename({suffix: '.min'}))
     .pipe(gulp.dest('./build'));
 }
