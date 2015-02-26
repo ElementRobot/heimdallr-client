@@ -14,7 +14,7 @@
     "websockets"
   ],
   "license": "MIT",
-  "main": "build/heimdallr-client.js",
+  "main": "./build/heimdallr-client.js",
   "moduleType": [
     "node"
   ],
