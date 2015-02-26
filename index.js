@@ -1,0 +1,1 @@
+var heimdallrClient = require('./lib/heimdallr-client.js');

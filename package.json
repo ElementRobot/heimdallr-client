@@ -27,7 +27,7 @@
     "websockets"
   ],
   "license": "MIT",
-  "main": "./src/heimdallr-client.js",
+  "main": "index.js",
   "dependencies": {
     "socket.io-client": "^1.3.4"
   },
