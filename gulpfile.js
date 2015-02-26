@@ -11,7 +11,7 @@ var gulp = require('gulp'),
 
 
 // Browserify
-bundler = watchify(browserify('./src/heimdallr-client.js', watchify.args));
+bundler = watchify(browserify('./index.js', watchify.args));
 // add any other browserify options or transforms here
 bundler.transform('brfs');
 
