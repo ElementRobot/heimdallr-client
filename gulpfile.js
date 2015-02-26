@@ -3,24 +3,15 @@ var gulp = require('gulp'),
     sourcemaps = require('gulp-sourcemaps'),
     source = require('vinyl-source-stream'),
     buffer = require('vinyl-buffer'),
-    watchify = require('watchify'),
     browserify = require('browserify'),
     uglify = require('gulp-uglify'),
     rename = require('gulp-rename'),
     derequire = require('gulp-derequire'),
-    browserifyArgs = {'standalone': 'heimdallr-client'},
     bundler;
 
 
 // Browserify
-if(process.env.DEV){
-    console.warn('WARN: Local paths will be included in build');
-    for(var key in watchify.args){
-        // Add in watchify args
-        browserifyArgs[key] = watchify.args[key];
-    }
-}
-bundler = watchify(browserify('./index.js', browserifyArgs));
+bundler = browserify('./index.js', {'standalone': 'heimdallr-client'});
 // add any other browserify options or transforms here
 bundler.transform('brfs');
 
@@ -29,7 +20,6 @@ gulp.task('default', ['js'], function(){
     setTimeout(process.exit.bind(0));
 });
 gulp.task('js', js);
-bundler.on('update', js); // on any dep update, runs the bundler
 
 function js() {
   return bundler.bundle()
