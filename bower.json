@@ -14,7 +14,7 @@
     "websockets"
   ],
   "license": "MIT",
-  "main": "src/heimdallr-client.js",
+  "main": "build/heimdallr-client.js",
   "moduleType": [
     "node"
   ],
@@ -22,8 +22,12 @@
     "**/.*",
     "node_modules",
     "bower_components",
+    "docs",
+    "examples",
+    "src",
     "tests",
-    "build"
+    "gulpfile.js",
+    "package.json"
   ],
   "dependencies": {
     "socket.io-client": "~1.3.4"
