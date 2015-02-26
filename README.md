@@ -1,9 +1,9 @@
 # heimdallr-client
 ## Overview
-Heimdallr is a system built on top of socket.io for transferring and storing data in real-time. It connects a network of providers to a network of consumers. A provider is a source of data or information. The provider sends that information to the Heimdallr server. The Heimdallr server stores that information and relays it to any consumers that are currently subscribed to that particular provider. If you would like to get started, request an authentication token by emailing (us)[mailto:heimdallr@elementrobot.com]
+Heimdallr is a system built on top of socket.io for transferring and storing data in real-time. It connects a network of providers to a network of consumers. A provider is a source of data or information. The provider sends that information to the Heimdallr server. The Heimdallr server stores that information and relays it to any consumers that are currently subscribed to that particular provider. If you would like to get started, request an authentication token by emailing [us](mailto:heimdallr@elementrobot.com)
 
 ## Usage
-First install (node)[http://nodejs.org/] and (bower)[http://bower.io/] if you don't already have them. Then install heimdallr-client:
+First install [node](http://nodejs.org/) and [bower](http://bower.io/) if you don't already have them. Then install heimdallr-client:
 
 ```bash
 bower install heimdallr-client --save
@@ -24,7 +24,7 @@ To use in the browser, `module` must be undefined. Example usage in browser:
 Example provider usage:
 
 ```javascript
-var provider = new heimdallrClient.Provider('http://heimdallr.skyforge.co', providerAuthToken);
+var provider = new heimdallrClient.Provider(providerAuthToken);
 
 // Respond to controls from consumers
 provider.on('auth-success', function(){
@@ -52,7 +52,7 @@ provider.completed(uuidOfControl);
 Example consumer usage:
 
 ```javascript
-var consumer = new heimdallrClient.Consumer('http://heimdallr.skyforge.co', consumerAuthToken);
+var consumer = new heimdallrClient.Consumer(consumerAuthToken);
 
 consumer.on('auth-success', function(){
     // You are now connected to Heimdallr
