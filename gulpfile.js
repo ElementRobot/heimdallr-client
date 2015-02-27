@@ -38,7 +38,6 @@ gulp.task('js', function js() {
 });
 
 gulp.task('docs', function docs() {
-    delete meta.name;
     return gulp.src(['./lib/*.js', 'README.md'])
         .pipe(jsdoc.parser(meta))
         .pipe(jsdoc.generator(
