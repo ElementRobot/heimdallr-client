@@ -7,8 +7,12 @@ var gulp = require('gulp'),
     uglify = require('gulp-uglify'),
     rename = require('gulp-rename'),
     derequire = require('gulp-derequire'),
-    jsdoc = require('gulp-jsdoc'),
+    fs = require('fs'),
+    path = require('path'),
+    exec = require('child_process').exec,
     meta = require('./package.json'),
+    jsDocConfPath = './docs/conf.json',
+    jsDocConf = require(jsDocConfPath),
     bundler;
 
 
@@ -37,22 +41,19 @@ gulp.task('js', function js() {
     .pipe(gulp.dest('./build'));
 });
 
-gulp.task('docs', function docs() {
-    return gulp.src(['./lib/*.js', 'README.md'])
-        .pipe(jsdoc.parser(meta))
-        .pipe(jsdoc.generator(
-            './docs',
-            {
-                path: 'ink-docstrap',
-                systemName: 'Heimdallr Client',
-                copyright: "©2015 Element Robot LLC",
-                theme: 'spacelab',
-                syntaxTheme: 'dark',
-                linenums: true,
-                dateFormat: 'YYYY-MM-DD'
-            },
-            {
-                outputSourceFiles: false
-            }
-         ));
+gulp.task('docs', function docs(cb) {
+    // Unfortunately jsdoc doesn't fit well into the gulp paradigm since
+    // it only provides a CLI tool.
+    jsDocConf.opts.destination = path.join('./docs', meta.name, meta.version);
+    jsDocConfStr = JSON.stringify(jsDocConf, null, 2);
+    fs.writeFile(jsDocConfPath, jsDocConfStr, function(err){
+        if(err) return cb(err);
+        exec('./node_modules/.bin/jsdoc -c ./docs/conf.json -p', function (err, stdout){
+            if(stdout) console.log(stdout);
+            if(err) return cb(err);
+            cb();
+        });
+    });
 });
+
+
