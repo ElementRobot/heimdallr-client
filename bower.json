@@ -33,9 +33,5 @@
     "gulpfile.js",
     "package.json"
   ],
-  "dependencies": {},
-  "repositories": {
-    "type": "git",
-    "url": "https://github.com/ElementRobot/heimdallr-client"
-  }
+  "dependencies": {}
 }

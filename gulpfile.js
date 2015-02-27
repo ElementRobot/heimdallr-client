@@ -7,6 +7,8 @@ var gulp = require('gulp'),
     uglify = require('gulp-uglify'),
     rename = require('gulp-rename'),
     derequire = require('gulp-derequire'),
+    jsdoc = require('gulp-jsdoc'),
+    meta = require('./package.json'),
     bundler;
 
 
@@ -15,13 +17,12 @@ bundler = browserify('./index.js', {'standalone': 'heimdallr-client'});
 // add any other browserify options or transforms here
 bundler.transform('brfs');
 
-gulp.task('default', ['js'], function(){
+gulp.task('default', ['js', 'docs'], function(){
     // Hack because gulp wasn't exiting
     setTimeout(process.exit.bind(0));
 });
-gulp.task('js', js);
 
-function js() {
+gulp.task('js', function js() {
   return bundler.bundle()
     // log errors if they happen
     .on('error', gutil.log.bind(gutil, 'Browserify Error'))
@@ -34,4 +35,25 @@ function js() {
     .pipe(sourcemaps.write('./')) // writes .map file
     .pipe(rename({suffix: '.min'}))
     .pipe(gulp.dest('./build'));
-}
+});
+
+gulp.task('docs', function docs() {
+    delete meta.name;
+    return gulp.src(['./lib/*.js', 'README.md'])
+        .pipe(jsdoc.parser(meta))
+        .pipe(jsdoc.generator(
+            './docs',
+            {
+                path: 'ink-docstrap',
+                systemName: 'Heimdallr Client',
+                copyright: "©2015 Element Robot LLC",
+                theme: 'spacelab',
+                syntaxTheme: 'dark',
+                linenums: true,
+                dateFormat: 'YYYY-MM-DD'
+            },
+            {
+                outputSourceFiles: false
+            }
+         ));
+});
