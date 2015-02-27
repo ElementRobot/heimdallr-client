@@ -1,5 +1,4 @@
 # Heimdallr-Client
-## Overview
 Heimdallr is a system built on top of socket.io for transferring and storing data in real-time. It connects a network of providers to a network of consumers. A provider is a source of data or information. The provider sends that information to the Heimdallr server. The Heimdallr server stores that information and relays it to any consumers that are currently subscribed to that particular provider. If you would like to get started, request an authentication token by emailing [us](mailto:heimdallr@elementrobot.com)
 
 ## Usage
@@ -73,6 +72,27 @@ consumer.on('auth-success', function(){
     var bytes = new Uint8Array(data);
     // Incoming binary data will be in 
 });
+
+// Start listening to a particular provider
+consumer.subscribe(uuidOfProvider);
+
+// Stop listening to a particular annoying provider
+consumer.unsubscribe(uuidOfProvider);
+
+// Specify what you actually want to hear
+consumer.setFilter(uuidOfProvider, {'event': ['Things I', 'want'], 'sensor': ['to', 'hear']});
+
+// Get the latest events emitted by a provider
+consumer.getState(uuidOfProvider, ['arrayOf', 'eventNames']);
+
+// Boss a provider around
+consumer.sendControl(uuidOfProvider, 'controlName', {'yourControl': 'value'});
+
+// Tell a provider to start streaming and start listening
+consumer.joinStream(uuidOfProvider);
+
+// Tell a provider to stop streaming and stop listening
+consumer.leaveStream(uuidOfProvider);
 ```
 
 
