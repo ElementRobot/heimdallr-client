@@ -44,11 +44,11 @@ provider.on('auth-success', function(){
 });
 
 // Broadcast sensor data
-provider.sendSensor('yourSensorName', 72);
-provider.sendSensor('otherSensor', {everyone: '\u2665s json'});
+provider.sendSensor('yourSensorSubtype', 72);
+provider.sendSensor('otherSensorSubtypeX', {everyone: '\u2665s json'});
 
 // Broadcast event data 
-provider.sendEvent('youGetIt', {arbitrary: 'data'});
+provider.sendEvent('yourEventSubtype', {arbitrary: 'data'});
 
 // Broadcast binary data
 provider.sendStream(new Uint8Array());
@@ -70,7 +70,6 @@ consumer.on('auth-success', function(){
     // Incoming event data
 }).on('stream', function(data){
     var bytes = new Uint8Array(data);
-    // Incoming binary data will be in 
 });
 
 // Start listening to a particular provider
@@ -80,13 +79,13 @@ consumer.subscribe(uuidOfProvider);
 consumer.unsubscribe(uuidOfProvider);
 
 // Specify what you actually want to hear
-consumer.setFilter(uuidOfProvider, {'event': ['Things I', 'want'], 'sensor': ['to', 'hear']});
+consumer.setFilter(uuidOfProvider, {'event': ['Subtypes I', 'want'], 'sensor': ['to', 'receive']});
 
 // Get the latest events emitted by a provider
-consumer.getState(uuidOfProvider, ['arrayOf', 'eventNames']);
+consumer.getState(uuidOfProvider, ['arrayOf', 'subtypeNames']);
 
 // Boss a provider around
-consumer.sendControl(uuidOfProvider, 'controlName', {'yourControl': 'value'});
+consumer.sendControl(uuidOfProvider, 'yourControlSubtype', {'yourControl': 'data'});
 
 // Tell a provider to start streaming and start listening
 consumer.joinStream(uuidOfProvider);
