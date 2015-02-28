@@ -1,0 +1,19 @@
+{
+  "opts": {
+    "readme": "./README.md",
+    "recurse": true,
+    "template": "./docs/templates",
+    "destination": "docs/heimdallr-client/0.0.0"
+  },
+  "source": {
+    "include": [
+      "./lib"
+    ]
+  },
+  "templates": {
+    "default": {
+      "outputSourceFiles": false
+    },
+    "cleverLinks": true
+  }
+}
