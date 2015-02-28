@@ -1,5 +1,5 @@
 ## Overview
-Heimdallr is a system built on top of socket.io for transferring and storing data in real-time. It connects a network of providers to a network of consumers. A provider is a source of data or information. The provider sends that information to the Heimdallr server. The Heimdallr server stores that information and relays it to any consumers that are currently subscribed to that particular provider. If you would like to get started, request an authentication token by emailing [us](mailto:heimdallr@elementrobot.com)
+Heimdallr is a system built on top of socket.io for transferring and storing data in real-time. It connects a network of providers to a network of consumers. A provider is a source of data. The provider sends that data to the Heimdallr server, which then stores it and relays it to any consumers that are currently subscribed to that particular provider. If you would like to get started, request an authentication token by emailing [us](mailto:heimdallr@elementrobot.com)
 
 ## Usage
 ### In the browser
@@ -12,7 +12,7 @@ bower install heimdallr-client --save
 Then include a script tag with your HTML:
 
 ```html
-<script src="path/to/bower_components/heimdallr-client/build/heimdallr-client.min.js"></script>
+<script src="/path/to/bower_components/heimdallr-client/build/heimdallr-client.min.js"></script>
 ```
 
 ### In node
@@ -47,7 +47,7 @@ provider.on('auth-success', function(){
 provider.sendSensor('yourSensorName', 72);
 provider.sendSensor('otherSensor', {everyone: '\u2665s json'});
 
-// Broadcast event data 
+// Broadcast event data
 provider.sendEvent('youGetIt', {arbitrary: 'data'});
 
 // Broadcast binary data
@@ -70,7 +70,7 @@ consumer.on('auth-success', function(){
     // Incoming event data
 }).on('stream', function(data){
     var bytes = new Uint8Array(data);
-    // Incoming binary data will be in 
+    // Incoming binary data will be in
 });
 
 // Start listening to a particular provider
