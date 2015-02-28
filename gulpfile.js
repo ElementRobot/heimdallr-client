@@ -11,8 +11,8 @@ var gulp = require('gulp'),
     path = require('path'),
     exec = require('child_process').exec,
     meta = require('./package.json'),
-    jsDocConfPath = './docs/conf.json',
-    jsDocConf = require(jsDocConfPath),
+    jsdocConfPath = './docs/conf.json',
+    jsdocConf = require(jsdocConfPath),
     bundler;
 
 
@@ -44,15 +44,13 @@ gulp.task('js', function js() {
 gulp.task('docs', function docs(cb) {
     // Unfortunately jsdoc doesn't fit well into the gulp paradigm since
     // it only provides a CLI tool.
-    jsDocConf.opts.destination = path.join('./docs', meta.name, meta.version);
-    jsDocConfStr = JSON.stringify(jsDocConf, null, 2);
-    fs.writeFile(jsDocConfPath, jsDocConfStr, function(err){
+    jsdocConf.opts.destination = path.join('./docs', meta.name, meta.version);
+    jsdocConfStr = JSON.stringify(jsdocConf, null, 2);
+    fs.writeFileSync(jsdocConfPath, jsdocConfStr);
+    exec('./node_modules/.bin/jsdoc -c ./docs/conf.json -p', function(err, stdout){
+        if(stdout) console.log(stdout);
         if(err) return cb(err);
-        exec('./node_modules/.bin/jsdoc -c ./docs/conf.json -p', function (err, stdout){
-            if(stdout) console.log(stdout);
-            if(err) return cb(err);
-            cb();
-        });
+        cb();
     });
 });
 
