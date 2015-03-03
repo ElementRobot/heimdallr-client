@@ -1,9 +1,12 @@
-var assert = require('chai').assert,
-    PORT = 3000,
+var PORT = 3000,
+    assert = require('chai').assert,
+    domain = require('domain').create(),
+    Emitter = require('events').EventEmitter,
     io = require('socket.io').listen(PORT),
     heimdallrClient = require('../index.js'),
     validator = require('heimdallr-validator'),
-    validUUID = 'c7528fa8-0a7b-4486-bbdc-460905ffa035';
+    validUUID = 'c7528fa8-0a7b-4486-bbdc-460905ffa035',
+    errorEmitter = new Emitter();
 
 heimdallrClient.Provider.prototype.url = 'http://localhost:' + PORT;
 
@@ -101,8 +104,21 @@ io.of('/consumer').on('connect', function(socket){
         .on('leaveStream', checkConsumerPacket);
 });
 
+// We want to wrap everything we do in a domain so we get a first look at
+// any uncaught errors
+domain.on('error', function(error){
+    assert(error.message === 'errorTriggered', error);
+    errorEmitter.emit('expectedError');
+});
+
 describe('Heimdallr Provider', function(){
     var provider;
+
+    // This isolates our domain to the block of tests. We also exit the domain
+    // after the block of tests so as to not conflict with gulp-mocha.
+    before(function(){
+        domain.enter();
+    });
 
     beforeEach(function(done){
         provider = new heimdallrClient.Provider(
@@ -127,22 +143,7 @@ describe('Heimdallr Provider', function(){
     });
 
     it('receives errors', function(done){
-        console.log('LISTENERS', process.listeners('uncaughtException'))
-        var mochaListener = process.listeners('uncaughtException').pop();
-
-        process.removeListener('uncaughtException', mochaListener);
-        console.log('POPPED', process.listeners('uncaughtException'))
-
-        function errorListener(error) {
-            assert(error.message === 'errorTriggered', error);
-            process.removeListener('uncaughtException', errorListener);
-            process.on('uncaughtException', mochaListener);
-            done();
-        }
-
-        process.on('uncaughtException', errorListener);
-
-        console.log('ADDED', process.listeners('uncaughtException'))
+        errorEmitter.once('expectedError', done);
         provider.sendEvent('triggerError', null);
     });
 
@@ -185,10 +186,18 @@ describe('Heimdallr Provider', function(){
         });
         provider.sendEvent('test', null);
     });
+
+    after(function(){
+        domain.exit();
+    });
 });
 
 describe('Heimdallr Consumer', function(){
     var consumer;
+
+    before(function(){
+        domain.enter();
+    });
 
     beforeEach(function(done){
         consumer = new heimdallrClient.Consumer(
@@ -238,18 +247,7 @@ describe('Heimdallr Consumer', function(){
     });
 
     it('receives errors', function(done){
-        var mochaListener = process.listeners('uncaughtException').pop();
-
-        process.removeListener('uncaughtException', mochaListener);
-
-        function errorListener(error) {
-            assert(error.message === 'errorTriggered', error);
-            process.removeListener('uncaughtException', errorListener);
-            process.on('uncaughtException', mochaListener);
-            done();
-        }
-
-        process.on('uncaughtException', errorListener);
+        errorEmitter.once('expectedError', done);
         consumer.sendControl(validUUID, 'triggerError', null);
     });
 
@@ -288,5 +286,11 @@ describe('Heimdallr Consumer', function(){
         consumer.sendControl(validUUID, 'test', null);
     });
 
+    after(function(){
+        domain.exit();
+    });
 });
+
+
+
 
