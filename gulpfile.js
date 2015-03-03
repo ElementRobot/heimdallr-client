@@ -66,4 +66,7 @@ gulp.task('docs', function docs(cb) {
     });
 });
 
+gulp.watch(['./lib', 'README.md'], ['docs']);
+
+
 
