@@ -40,13 +40,13 @@ provider.on('control', function(packet){
     if(packet.persistent){
         // Let the Heimdallr server know the control has been completed
         provider.completed(packet.persistent);
-        console.log('completed persistent event');
+        console.log('PROVIDER: completed persistent control');
     }
 });
 
 // Make a fake temperature every second and send the measured value to the Heimdallr server
 (function readTemperature(){
-    console.log('sending temperature');
+    console.log('PROVIDER: sending temperature');
     provider.sendSensor('temperature', Math.random() * 40 + 50);
     setTimeout(readTemperature, 1 * 1000);
 })();
@@ -58,24 +58,29 @@ consumer.on('auth-success', function(){
     // Now we can subscribe to providers we want to interact with.
     consumer.subscribe(uuids.provider);
 }).on('event', function(packet){
+    // packet.provider tells us who sent the sensor packet.
     if(packet.subtype === 'status'){
-        console.log('%s\'s status:', packet.provider, packet.data);
+        console.log('RECVD status:', packet.data);
     }
     else if(packet.subtype === 'power'){
-        console.log(packet.data ? 'full power' : 'no power');
+        console.log('RECVD ' + packet.data ? 'full power' : 'no power');
     }
 }).on('sensor', function(packet){
     // packet.provider tells us who sent the sensor packet.
-    console.log('%s: %s', packet.subtype, packet.data);
+    console.log('RECVD %s:', packet.subtype, packet.data);
 });
 
 consumer.sendControl(uuids.provider, 'accelerate', {direction: 'x', magnitude: 10});
 consumer.sendControl(uuids.provider, 'turnRight', null);
 consumer.sendControl(uuids.provider, 'turnLeft', null);
+consumer.sendControl(uuids.provider, 'accelerate', {direction: 'x', magnitude: 0});
 
 setTimeout(function(){
+    console.log('GETTING STATE');
     consumer.getState(uuids.provider, ['status', 'power']);
+}, 2 * 1000);
+
+setTimeout(function(){
+    // Sends a persistent control
     consumer.sendControl(uuids.provider, 'turnRight', null, true);
-    consumer.sendControl(uuids.provider, 'accelerate', {direction: 'x', magnitude: 0});
-    consumer.getState(uuids.provider, ['status']);
-}, 6 * 1000);
+}, 3 * 1000);
