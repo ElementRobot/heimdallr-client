@@ -1,5 +1,5 @@
-# Advanced
-This tutorial is meant to introduce some of the advanced features of Heimdallr. It builds on the code used in {@tutorial walkthrough}.
+## Overview
+This tutorial is meant to introduce some of the advanced features of Heimdallr. It builds on the code used in the {@tutorial walkthrough} tutorial.
 
 ## Streaming
 
@@ -19,10 +19,7 @@ function stream(){
 
 // Make a new provider
 provider = new heimdallrClient.Provider(tokens.provider);
-provider.on('err', function(err){
-    // Faceplant on error
-    throw new Error(err);
-}).on('control', function(packet){
+provider.on('control', function(packet){
     if(packet.subtype === 'stream' && packet.data === 'start'){
         streaming = true;
         stream();
@@ -37,11 +34,8 @@ Next make consumer to receive the stream
 
 ```javascript
 // Make a new consumer
-consumer = new heimdallrClient.consumer(tokens.consumer);
-consumer.on('err', function(err){
-    // Faceplant on error
-    throw new Error(err);
-}).on('auth-success', function(){
+consumer = new heimdallrClient.Consumer(tokens.consumer);
+consumer.on('auth-success', function(){
     // We've successfully authenticated with the Heimdallr server.
     // Now we can subscribe to providers we want to interact with.
     consumer.subscribe(uuids.provider);
@@ -59,17 +53,14 @@ setTimeout(function(){
 }, 3 * 1000);
 ```
 
-Notice that the consumer does not need to send a stream control. Instead the Heidmallr server takes care of that. The Heimdallr server monitors who is listening to a provider's stream. If a consumer is the first to join a stream for a provider the Heimdallr server will send a stream start packet. If a consumer is the last to leave a stream for a provider the Heimdallr server will send a stream stop packet. The next time a consumer joins the provider's stream it will trigger another stream start packet and so on.
+Notice that the consumer does not need to send a stream control. Instead the Heimdallr server takes care of that. The Heimdallr server monitors who is listening to a provider's stream. If a consumer is the first to join a stream for a provider the Heimdallr server will send a stream start packet. If a consumer is the last to leave a stream for a provider the Heimdallr server will send a stream stop packet. The next time a consumer joins the provider's stream it will trigger another stream start packet and so on.
 
 ## Filtering
-Let's say that the provider is also sending out a bunch of temperature readings that we don't want to hear and some accelerometer readings that we do want to hear. So maybe now our provider code looks like this
+Let's say that the provider is also sending out a bunch of temperature readings that we don't want to hear and some accelerometer readings that we do want to hear. So maybe now our provider code looks thusly
 
 ```javascript
 provider = new heimdallrClient.Provider(tokens.provider);
-provider.on('err', function(err){
-    // Faceplant on error
-    throw new Error(err);
-}).on('control', function(packet){
+provider.on('control', function(packet){
     if(packet.subtype === 'stream' && packet.data === 'start'){
         provider.sendSensor('accelerometer', {x: 0, y: 0, z: 100});
         streaming = true;
@@ -88,15 +79,12 @@ provider.on('err', function(err){
 })();
 ```
 
- On the provider side can't just omit the on 'sensor' callback because we still want to hear the accelerometer reading. We could just exit the sensor handler if the subtype is temperature, but that means we are still taking up bandwidth and processing power on the provider (probably not a concern for most use cases but bear with me here). Another option we have is to set the filter for our consumer. So, we could modify our consumer code to look like this
+ On the provider side can't just omit the on 'sensor' callback because we still want to hear the accelerometer reading. We could just exit the sensor handler if the subtype is temperature, but that means we are still taking up bandwidth and processing power on the provider (probably not a concern for most use cases but bear with me here). Another option we have is to set the filter for our consumer. So, we could modify our consumer code like so
 
  ```javascript
 // Make a new consumer
-consumer = new heimdallrClient.consumer(tokens.consumer);
-consumer.on('err', function(err){
-    // Faceplant on error
-    throw new Error(err);
-}).on('auth-success', function(){
+consumer = new heimdallrClient.Consumer(tokens.consumer);
+consumer.on('auth-success', function(){
     // We've successfully authenticated with the Heimdallr server.
     // Now we can subscribe to providers we want to interact with.
     consumer.subscribe(uuids.provider);
@@ -115,10 +103,34 @@ consumer.on('err', function(err){
 
 The setFilter function allows us to select only the packet subtypes that we want to hear. We could do the same for events. Note that even though this consumer is filtering out all but accelerometer packets, the other sensor packets are still being saved on the Heimdallr server and sent out to all the consumers that don't have this filter set.
 
+## Removing Listeners
+We also have the ability to remove default listeners, or listeners that you have set yourself. Say you want to add your own custom error handler. You might do something like this
+
+```javascript
+// Make a new consumer
+consumer = new heimdallrClient.Consumer(tokens.consumer);
+consumer.removeListener('err');  // Remove the default error handler
+consumer.on('err', function(err){
+    console.log('This looks like a nice error:', err);
+    // Faceplant
+    throw new Error(err);
+}).on('auth-success', function(){
+    // We've successfully authenticated with the Heimdallr server.
+    // Now we can subscribe to providers we want to interact with.
+    consumer.subscribe(uuids.provider);
+});
+
+setTimeout(function(){
+    // We don't have a schema for this so it will trigger an 'err' event
+    consumer.sendControl(uuids.provider, 'woops', null);
+}, 4 * 1000);
+```
+
+## Conclusion
 Now putting it all together we might get a file that looks something like this
 
 ```javascript
-var heimdallrClient = require('heidmallr-client'),
+var heimdallrClient = require('heimdallr-client'),
     tokens = {
         consumer: '7c5ffd18-ed5c-4146-9610-5beabdd9099a',
         provider: 'aac995a3-03f4-4f78-a793-fe7ec8d4f961'
@@ -139,13 +151,13 @@ function stream(){
         data[i] = Math.round(Math.random());
     }
     provider.sendStream(data);
-    setTimeout(stream, 10);
+    setTimeout(stream, 100);
 }
 
 // Make a new provider
 provider = new heimdallrClient.Provider(tokens.provider);
 provider.on('err', function(err){
-    // Faceplant on error
+    // Faceplant
     throw new Error(err);
 }).on('control', function(packet){
     if(packet.subtype === 'stream' && packet.data === 'start'){
@@ -166,9 +178,11 @@ provider.on('err', function(err){
 })();
 
 // Make a new consumer
-consumer = new heimdallrClient.consumer(tokens.consumer);
+consumer = new heimdallrClient.Consumer(tokens.consumer);
+consumer.removeListener('err');  // Remove the default error handler
 consumer.on('err', function(err){
-    // Faceplant on error
+    console.log('This looks like a nice error:', err);
+    // Faceplant
     throw new Error(err);
 }).on('auth-success', function(){
     // We've successfully authenticated with the Heimdallr server.
@@ -193,4 +207,9 @@ setTimeout(function(){
     // Want to stop streaming data from this provider
     consumer.leaveStream(uuids.provider);
 }, 3 * 1000);
+
+setTimeout(function(){
+    // We don't have a schema for this so it will trigger an 'err' event
+    consumer.sendControl(uuids.provider, 'woops', null);
+}, 4 * 1000);
 ```

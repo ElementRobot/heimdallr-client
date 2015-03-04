@@ -1,4 +1,4 @@
-var heimdallrClient = require('heidmallr-client'),
+var heimdallrClient = require('heimdallr-client'),
     tokens = {
         consumer: '7c5ffd18-ed5c-4146-9610-5beabdd9099a',
         provider: 'aac995a3-03f4-4f78-a793-fe7ec8d4f961'
@@ -19,13 +19,13 @@ function stream(){
         data[i] = Math.round(Math.random());
     }
     provider.sendStream(data);
-    setTimeout(stream, 10);
+    setTimeout(stream, 100);
 }
 
 // Make a new provider
 provider = new heimdallrClient.Provider(tokens.provider);
 provider.on('err', function(err){
-    // Faceplant on error
+    // Faceplant
     throw new Error(err);
 }).on('control', function(packet){
     if(packet.subtype === 'stream' && packet.data === 'start'){
@@ -46,9 +46,11 @@ provider.on('err', function(err){
 })();
 
 // Make a new consumer
-consumer = new heimdallrClient.consumer(tokens.consumer);
+consumer = new heimdallrClient.Consumer(tokens.consumer);
+consumer.removeListener('err');  // Remove the default error handler
 consumer.on('err', function(err){
-    // Faceplant on error
+    console.log('This looks like a nice error:', err);
+    // Faceplant
     throw new Error(err);
 }).on('auth-success', function(){
     // We've successfully authenticated with the Heimdallr server.
@@ -73,3 +75,8 @@ setTimeout(function(){
     // Want to stop streaming data from this provider
     consumer.leaveStream(uuids.provider);
 }, 3 * 1000);
+
+setTimeout(function(){
+    // We don't have a schema for this so it will trigger an 'err' event
+    consumer.sendControl(uuids.provider, 'woops', null);
+}, 4 * 1000);

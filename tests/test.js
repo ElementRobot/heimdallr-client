@@ -76,18 +76,11 @@ io.of('/consumer').on('connect', function(socket){
         }
     }).on('setFilter', function(packet){
         checkConsumerPacket(packet);
-        if(!packet.filter){
-            socket.emit('err', 'No filter provided');
+        if(!(packet.event instanceof Array) && !(packet.sensor instanceof Array)){
+            socket.emit('err', 'Invalid `filter`');
             return;
         }
         socket.emit('checkedPacket', 'setFilter');
-    }).on('clearFilter', function(packet){
-        checkConsumerPacket(packet);
-        if(!packet.packetType){
-            socket.emit('err', 'No packetType provided');
-            return;
-        }
-        socket.emit('checkedPacket', 'clearFilter');
     }).on('getState', function(packet){
         checkConsumerPacket(packet);
         if(!packet.subtypes){

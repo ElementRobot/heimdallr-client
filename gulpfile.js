@@ -56,7 +56,7 @@ gulp.task('docs', ['tests'], function docs(cb) {
     jsdocConf.opts.destination = destination;
     jsdocConfStr = JSON.stringify(jsdocConf, null, 2);
     fs.writeFileSync(jsdocConfPath, jsdocConfStr);
-    exec('./node_modules/.bin/jsdoc -c ./docs/conf.json -p', function(err, stdout){
+    exec('./node_modules/.bin/jsdoc -c ./docs/conf.json -u ./examples -p', function(err, stdout){
         if(stdout) console.log(stdout);
         if(err) return cb(err);
         cb();

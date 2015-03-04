@@ -7,46 +7,54 @@ var request = require('request'),
         consumer: '19d1720c-9796-4ae9-aff3-1f3ed9b1fc3d',
         provider: 'f2af84a5-b361-4875-bf5a-05fa9949facb'
     },
-    schemas = {
-        event: {
-            status: {type: 'string'},
-            power: {type: 'boolean'}
-        },
-        sensor: {
-            temperature: {type: 'number'},
-            accelerometer: {
-                type: 'object',
-                properties: {
-                    x: {type: 'number'},
-                    y: {type: 'number'},
-                    z: {type: 'number'}
-               }
-            }
-        },
-        control: {
-            turnLeft: {type: 'null'},
-            turnRight: {type: 'null'},
-            accelerate: {
-                type: 'object',
-                properties: {
-                    direction: {type: 'string', enum: ['x', 'y', 'z']},
-                    magnitude: {type: 'number'}
-                }
+    schemas,
+    options;
+
+schemas = {
+    event: {
+        status: {type: 'string'},
+        power: {type: 'boolean'}
+    },
+    sensor: {
+        temperature: {type: 'number'},
+        accelerometer: {
+            type: 'object',
+            properties: {
+                x: {type: 'number'},
+                y: {type: 'number'},
+                z: {type: 'number'}
+           }
+        }
+    },
+    control: {
+        turnLeft: {type: 'null'},
+        turnRight: {type: 'null'},
+        accelerate: {
+            type: 'object',
+            properties: {
+                direction: {type: 'string', enum: ['x', 'y', 'z']},
+                magnitude: {type: 'number'}
             }
         }
-    };
+    }
+};
 
-request = request.defaults({
+function handleResponse(err, res, body){
+    if(err) console.log('ERROR:', err);
+    console.log('STATUS:', res.statusCode);
+}
+
+options = {
+    url: 'http://heimdallr.skyforge.co/api/v1/provider/' + uuids.provider + '/subtype-schemas',
     encoding: 'utf-8',
     headers: {
         'content-type': 'application/json',
         'authorization': 'Token ' + tokens.consumer
     },
     json: true
-});
+};
 
 for(var packetType in schemas){
-    request.post('http://heimdallr.skyforge.co/api/v1/provider/' + uuids.provider + '/subtype-schemas', {
-        body: JSON.stringify({packetType: packetType, subtypeSchemas: schemas[packetType]})
-    });
+    options.body = {packetType: packetType, subtypeSchemas: schemas[packetType]};
+    request.post(options, handleResponse);
 }

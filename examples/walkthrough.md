@@ -1,4 +1,4 @@
-# Walkthrough
+## Overview
 This tutorial should demonstrate most of the functionality of Heimdallr-Client. This walkthrough will demonstrate using Heimdallr-Client in node.js. Heimdallr-Client can also be used in the browser and is available as a bower package. The authentication keys are fake so copy-pasting the code will not work. To get your own authentication keys simply contact [us](mailto:heimdallr@elementrobot.com).
 
 ## Getting Started
@@ -19,8 +19,7 @@ nano upload_schemas.js
 add the folowing code
 
 
-```javascript
-var request = require('request'),
+```javascriptvar request = require('request'),
     tokens = {
         consumer: '7c5ffd18-ed5c-4146-9610-5beabdd9099a',
         provider: 'aac995a3-03f4-4f78-a793-fe7ec8d4f961'
@@ -29,48 +28,56 @@ var request = require('request'),
         consumer: '19d1720c-9796-4ae9-aff3-1f3ed9b1fc3d',
         provider: 'f2af84a5-b361-4875-bf5a-05fa9949facb'
     },
-    schemas = {
-        event: {
-            status: {type: 'string'},
-            power: {type: 'boolean'}
-        },
-        sensor: {
-            temperature: {type: 'number'},
-            accelerometer: {
-                type: 'object',
-                properties: {
-                    x: {type: 'number'},
-                    y: {type: 'number'},
-                    z: {type: 'number'}
-               }
-            }
-        },
-        control: {
-            turnLeft: {type: 'null'},
-            turnRight: {type: 'null'},
-            accelerate: {
-                type: 'object',
-                properties: {
-                    direction: {type: 'string', enum: ['x', 'y', 'z']},
-                    magnitude: {type: 'number'}
-                }
+    schemas,
+    options;
+
+schemas = {
+    event: {
+        status: {type: 'string'},
+        power: {type: 'boolean'}
+    },
+    sensor: {
+        temperature: {type: 'number'},
+        accelerometer: {
+            type: 'object',
+            properties: {
+                x: {type: 'number'},
+                y: {type: 'number'},
+                z: {type: 'number'}
+           }
+        }
+    },
+    control: {
+        turnLeft: {type: 'null'},
+        turnRight: {type: 'null'},
+        accelerate: {
+            type: 'object',
+            properties: {
+                direction: {type: 'string', enum: ['x', 'y', 'z']},
+                magnitude: {type: 'number'}
             }
         }
-    };
+    }
+};
 
-request = request.defaults({
+function handleResponse(err, res, body){
+    if(err) console.log('ERROR:', err);
+    console.log('STATUS:', res.statusCode);
+}
+
+options = {
+    url: 'http://heimdallr.skyforge.co/api/v1/provider/' + uuids.provider + '/subtype-schemas',
     encoding: 'utf-8',
     headers: {
         'content-type': 'application/json',
         'authorization': 'Token ' + tokens.consumer
     },
     json: true
-});
+};
 
 for(var packetType in schemas){
-    request.post('http://heimdallr.skyforge.co/api/v1/provider/' + uuids.provider + '/subtype-schemas', {
-        body: JSON.stringify({packetType: packetType, subtypeSchemas: schemas[packetType]})
-    });
+    options.body = {packetType: packetType, subtypeSchemas: schemas[packetType]};
+    request.post(options, handleResponse);
 }
 ```
 
@@ -78,6 +85,11 @@ close the file with Ctrl+X Y [return] and run it with
 
 ```bash
 node upload_schemas.js
+
+# Output
+# STATUS: 200
+# STATUS: 200
+# STATUS: 200
 ```
 
 What this does is tell the Heimdallr server what to expect for specific packet subtypes for a given provider. So now it knows that if it recieves an event packet with a status subtype that the data field should be a string. This is accomplished using [JSON Schema](http://json-schema.org/). If you haven't checked it out before, we strongly recommend doing so. A useful tool for getting acquainted with JSON schema is [JSON Schema Lint](http://jsonschemalint.com/). Schemas only need to be uploaded once per provider. New schemas can be uploaded at anytime. Keep in mind that any old schemas will be erased.
@@ -92,7 +104,7 @@ nano walkthrough.js
 add the following code
 
 ```javascript
-var heimdallrClient = require('heidmallr-client'),
+var heimdallrClient = require('heimdallr-client'),
     tokens = {
         consumer: '7c5ffd18-ed5c-4146-9610-5beabdd9099a',
         provider: 'aac995a3-03f4-4f78-a793-fe7ec8d4f961'
@@ -129,10 +141,7 @@ controlHandler = {
 
 // Make a new provider
 provider = new heimdallrClient.Provider(tokens.provider);
-provider.on('err', function(err){
-    // Faceplant on error
-    throw new Error(err);
-}).on('control', function(packet){
+provider.on('control', function(packet){
     controlHandler[packet.subtype](packet);
     if(packet.persistent){
         // Let the Heimdallr server know the control has been completed
@@ -162,11 +171,8 @@ A consumer is a Heimdallr client that listens for information from providers. A 
 
 ```javascript
 // Make a new consumer
-consumer = new heimdallrClient.consumer(tokens.consumer);
-consumer.on('err', function(err){
-    // Faceplant on error
-    throw new Error(err);
-}).on('auth-success', function(){
+consumer = new heimdallrClient.Consumer(tokens.consumer);
+consumer.on('auth-success', function(){
     // We've successfully authenticated with the Heimdallr server.
     // Now we can subscribe to providers we want to interact with.
     consumer.subscribe(uuids.provider);
@@ -183,8 +189,8 @@ consumer.on('err', function(err){
 });
 
 consumer.sendControl(uuids.provider, 'accelerate', {direction: 'x', magnitude: 10});
-consumer.sendControl(uuids.provider, 'turnRight');
-consumer.sendControl(uuids.provider, 'turnLeft');
+consumer.sendControl(uuids.provider, 'turnRight', null);
+consumer.sendControl(uuids.provider, 'turnLeft', null);
 
 setTimeout(function(){
     consumer.getState(uuids.provider, ['status', 'power']);
@@ -200,7 +206,7 @@ and run it with
 node walkthrough.js
 ```
 
-Now when you run it you should see some more interesting output. You can see that the provider is responding to the controls sent by the consumer. And you can see that the consumer is receiving information generated by the provider. Play around with the values, add controls, event and sensors to get a feel for how everthing works together. For more advanced features see {@tutorial advanced}.
+Now when you run it you should see some more interesting output. You can see that the provider is responding to the controls sent by the consumer. And you can see that the consumer is receiving information generated by the provider. Play around with the values, add controls, event and sensors to get a feel for how everthing works together. For more features see the {@tutorial advanced} tutorial.
 
 
 

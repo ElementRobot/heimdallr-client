@@ -1,4 +1,4 @@
-var heimdallrClient = require('heidmallr-client'),
+var heimdallrClient = require('heimdallr-client'),
     tokens = {
         consumer: '7c5ffd18-ed5c-4146-9610-5beabdd9099a',
         provider: 'aac995a3-03f4-4f78-a793-fe7ec8d4f961'
@@ -35,10 +35,7 @@ controlHandler = {
 
 // Make a new provider
 provider = new heimdallrClient.Provider(tokens.provider);
-provider.on('err', function(err){
-    // Faceplant on error
-    throw new Error(err);
-}).on('control', function(packet){
+provider.on('control', function(packet){
     controlHandler[packet.subtype](packet);
     if(packet.persistent){
         // Let the Heimdallr server know the control has been completed
@@ -55,11 +52,8 @@ provider.on('err', function(err){
 })();
 
 // Make a new consumer
-consumer = new heimdallrClient.consumer(tokens.consumer);
-consumer.on('err', function(err){
-    // Faceplant on error
-    throw new Error(err);
-}).on('auth-success', function(){
+consumer = new heimdallrClient.Consumer(tokens.consumer);
+consumer.on('auth-success', function(){
     // We've successfully authenticated with the Heimdallr server.
     // Now we can subscribe to providers we want to interact with.
     consumer.subscribe(uuids.provider);
@@ -76,8 +70,8 @@ consumer.on('err', function(err){
 });
 
 consumer.sendControl(uuids.provider, 'accelerate', {direction: 'x', magnitude: 10});
-consumer.sendControl(uuids.provider, 'turnRight');
-consumer.sendControl(uuids.provider, 'turnLeft');
+consumer.sendControl(uuids.provider, 'turnRight', null);
+consumer.sendControl(uuids.provider, 'turnLeft', null);
 
 setTimeout(function(){
     consumer.getState(uuids.provider, ['status', 'power']);
@@ -85,6 +79,3 @@ setTimeout(function(){
     consumer.sendControl(uuids.provider, 'accelerate', {direction: 'x', magnitude: 0});
     consumer.getState(uuids.provider, ['status']);
 }, 6 * 1000);
-
-
-
