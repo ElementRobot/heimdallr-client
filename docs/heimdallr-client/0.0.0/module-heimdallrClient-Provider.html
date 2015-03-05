@@ -48,7 +48,7 @@
     <h2>Constructor</h2>
     
 
-    <h4 class="name" id="Provider"><span class="type-signature"></span>new Provider<span class="signature">(token)</span><span class="type-signature"> &rarr; {Provider}</span></h4>
+    <h4 class="name" id="Provider"><span class="type-signature"></span>new Provider<span class="signature">(token, options)</span><span class="type-signature"> &rarr; {<a href="module-heimdallrClient-Provider.html">module:heimdallrClient~Provider</a>}</span></h4>
 
     
 
@@ -112,6 +112,29 @@ but it connects to the /provider namespace.
         </tr>
 
     
+
+        <tr>
+            
+                <td class="name"><code>options</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">socket.io options passed to io.connect.</td>
+        </tr>
+
+    
     </tbody>
 </table>
 
@@ -171,7 +194,7 @@ but it connects to the /provider namespace.
 
         
 <div class="param-desc">
-    A new Provider object.
+    A new Heimdallr Provider object.
 </div>
 
 
@@ -179,7 +202,7 @@ but it connects to the /provider namespace.
 <dl>
     <dt>
         Type: 
-<span class="param-type">Provider</span>
+<span class="param-type"><a href="module-heimdallrClient-Provider.html">module:heimdallrClient~Provider</a></span>
 
 
     </dt>
@@ -199,7 +222,7 @@ but it connects to the /provider namespace.
 
 
     <ul>
-        <li>Client</li>
+        <li><a href="module-heimdallrClient-Client.html">module:heimdallrClient~Client</a></li>
     </ul>
 
 
@@ -214,6 +237,120 @@ but it connects to the /provider namespace.
     
 
     
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id="url"><span class="type-signature">(private) </span>url<span class="type-signature"></span></h4>
+
+
+
+
+
+
+
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>url</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The URL of the Heimdallr server</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-overrides">Overrides:</dt>
+    <dd class="tag-overrides"><ul class="dummy"><li>
+        <a href="module-heimdallrClient-Client.html#url">module:heimdallrClient~Client#url</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+    
 
     
         <h3 class="subsection-title">Methods</h3>
@@ -223,7 +360,7 @@ but it connects to the /provider namespace.
 
     
 
-    <h4 class="name" id="completed"><span class="type-signature"></span>completed<span class="signature">(uuid)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="completed"><span class="type-signature"></span>completed<span class="signature">(uuid)</span><span class="type-signature"> &rarr; {<a href="module-heimdallrClient-Provider.html">module:heimdallrClient~Provider</a>}</span></h4>
 
     
 
@@ -346,6 +483,21 @@ until the provider signals that the control has been completed.
 
 
 
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type: 
+<span class="param-type"><a href="module-heimdallrClient-Provider.html">module:heimdallrClient~Provider</a></span>
+
+
+    </dt>
+</dl>
+
+    
 
 
 
@@ -354,18 +506,98 @@ until the provider signals that the control has been completed.
 
     
 
-    <h4 class="name" id="on"><span class="type-signature"></span>on<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="on"><span class="type-signature"></span>on<span class="signature">(msgName, fn)</span><span class="type-signature"> &rarr; {<a href="module-heimdallrClient-Client.html">module:heimdallrClient~Client</a>}</span></h4>
 
     
 
 
 
+<div class="description">
+    Add a socket.io message listener. A socket.io message is any communication
+emitted by a socket.io client or server. Heimdallr
+<a href="module-heimdallrClient.html#~packet"><code>packets</code></a> are a special instance
+of a socket.io message.
+</div>
 
 
 
 
 
 
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>msgName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Name of the socket.io message to listen for.</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>fn</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">msgCallback</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><a href="module-heimdallrClient.html#~msgCallback"><code>Callback</code></a>
+    to run when socket.io message is heard.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
@@ -379,7 +611,10 @@ until the provider signals that the control has been completed.
     
 
     
-
+    <dt class="inherited-from">Inherited From:</dt>
+    <dd class="inherited-from"><ul class="dummy"><li>
+        <a href="module-heimdallrClient-Client.html#on">module:heimdallrClient~Client#on</a>
+    </li></ul></dd>
     
 
     
@@ -403,12 +638,7 @@ until the provider signals that the control has been completed.
     
 
     
-    <dt class="tag-see">See:</dt>
-    <dd class="tag-see">
-        <ul>
-            <li><a href="module-heimdallrClient-Client.html#on"><code>module:heimdallrClient~Client#on</code></a></li>
-        </ul>
-    </dd>
+
     
 
     
@@ -426,6 +656,21 @@ until the provider signals that the control has been completed.
 
 
 
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type: 
+<span class="param-type"><a href="module-heimdallrClient-Client.html">module:heimdallrClient~Client</a></span>
+
+
+    </dt>
+</dl>
+
+    
 
 
 
@@ -434,7 +679,154 @@ until the provider signals that the control has been completed.
 
     
 
-    <h4 class="name" id="sendEvent"><span class="type-signature"></span>sendEvent<span class="signature">(subtype, data)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="removeListener"><span class="type-signature"></span>removeListener<span class="signature">(msgName)</span><span class="type-signature"> &rarr; {<a href="module-heimdallrClient-Client.html">module:heimdallrClient~Client</a>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    Removes a socket.io message listener.
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>msgName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">Name of the socket.io message to
+    remove listener for.</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+    <dt class="inherited-from">Inherited From:</dt>
+    <dd class="inherited-from"><ul class="dummy"><li>
+        <a href="module-heimdallrClient-Client.html#removeListener">module:heimdallrClient~Client#removeListener</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type: 
+<span class="param-type"><a href="module-heimdallrClient-Client.html">module:heimdallrClient~Client</a></span>
+
+
+    </dt>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="sendEvent"><span class="type-signature"></span>sendEvent<span class="signature">(subtype, data)</span><span class="type-signature"> &rarr; {<a href="module-heimdallrClient-Provider.html">module:heimdallrClient~Provider</a>}</span></h4>
 
     
 
@@ -578,6 +970,21 @@ for the given subtype.
 
 
 
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type: 
+<span class="param-type"><a href="module-heimdallrClient-Provider.html">module:heimdallrClient~Provider</a></span>
+
+
+    </dt>
+</dl>
+
+    
 
 
 
@@ -586,7 +993,7 @@ for the given subtype.
 
     
 
-    <h4 class="name" id="sendSensor"><span class="type-signature"></span>sendSensor<span class="signature">(subtype, data)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="sendSensor"><span class="type-signature"></span>sendSensor<span class="signature">(subtype, data)</span><span class="type-signature"> &rarr; {<a href="module-heimdallrClient-Provider.html">module:heimdallrClient~Provider</a>}</span></h4>
 
     
 
@@ -730,6 +1137,21 @@ for the given subtype.
 
 
 
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type: 
+<span class="param-type"><a href="module-heimdallrClient-Provider.html">module:heimdallrClient~Provider</a></span>
+
+
+    </dt>
+</dl>
+
+    
 
 
 
@@ -738,7 +1160,7 @@ for the given subtype.
 
     
 
-    <h4 class="name" id="sendStream"><span class="type-signature"></span>sendStream<span class="signature">(data)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="sendStream"><span class="type-signature"></span>sendStream<span class="signature">(data)</span><span class="type-signature"> &rarr; {<a href="module-heimdallrClient-Provider.html">module:heimdallrClient~Provider</a>}</span></h4>
 
     
 
@@ -856,6 +1278,21 @@ stream for this provider. This data will not be saved.
 
 
 
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type: 
+<span class="param-type"><a href="module-heimdallrClient-Provider.html">module:heimdallrClient~Provider</a></span>
+
+
+    </dt>
+</dl>
+
+    
 
 
 
@@ -875,14 +1312,14 @@ stream for this provider. This data will not be saved.
 </div>
 
 <nav>
-    <h2><a href="index.html">Heimdallr-Client</a></h2><h3>Modules</h3><ul><li><a href="module-heimdallrClient.html">heimdallrClient</a></li></ul><h3>Classes</h3><ul><li><a href="module-heimdallrClient-Client.html">Client</a></li><li><a href="module-heimdallrClient-Consumer.html">Consumer</a></li><li><a href="module-heimdallrClient-Provider.html">Provider</a></li></ul>
+    <h2><a href="index.html">Heimdallr-Client</a></h2><h3>Modules</h3><ul><li><a href="module-heimdallrClient.html">heimdallrClient</a></li></ul><h3>Classes</h3><ul><li><a href="module-heimdallrClient-Client.html">Client</a></li><li><a href="module-heimdallrClient-Consumer.html">Consumer</a></li><li><a href="module-heimdallrClient-Provider.html">Provider</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-advanced.html">advanced</a></li><li><a href="tutorial-walkthrough.html">walkthrough</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
     ©2015 Element Robot LLC<br>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-beta1</a> on Thu Mar 05 2015 09:34:03 GMT-0800 (PST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-beta1</a> on Thu Mar 05 2015 09:47:05 GMT-0800 (PST)
 </footer>
 
 <script> prettyPrint(); </script>
