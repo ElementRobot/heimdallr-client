@@ -40,11 +40,11 @@ gulp.task('js', ['tests'], function js() {
     .pipe(source('heimdallr-client.js'))
     .pipe(derequire())
     .pipe(buffer())
-    .pipe(gulp.dest('./build'))
-    .pipe(sourcemaps.init({loadMaps: true})) // loads map from browserify file
-    .pipe(uglify())
-    .pipe(sourcemaps.write('./')) // writes .map file
+    .pipe(gulp.dest('./build'))  // write the original file
     .pipe(rename({suffix: '.min'}))
+    .pipe(sourcemaps.init({loadMaps: true}))  // loads map from browserify file
+    .pipe(uglify())
+    .pipe(sourcemaps.write('./'))  // writes .map file
     .pipe(gulp.dest('./build'));
 });
 
