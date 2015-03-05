@@ -29,9 +29,3 @@ node_modules
 
 # Bower dependency directory
 bower_components
-
-# Cruft that doesn't need to be in vc
-build
-
-
-
