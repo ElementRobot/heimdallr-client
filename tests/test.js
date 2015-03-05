@@ -22,7 +22,13 @@ io.of('/provider').on('connect', function(socket){
             socket.emit('auth-success');
         }
     }).on('event', function(packet){
-        validator.validatePacket('event', packet);
+        var error;
+
+        error = validator.validatePacket('event', packet);
+        if(error){
+            socket.emit('err', error);
+            return;
+        }
         socket.emit('heardEvent', packet);
         if(packet.subtype === 'triggerAuthSuccess'){
             socket.emit('auth-success');
@@ -34,7 +40,13 @@ io.of('/provider').on('connect', function(socket){
             socket.emit('pong');
         }
     }).on('sensor', function(packet){
-        validator.validatePacket('sensor', packet);
+        var error;
+
+        error = validator.validatePacket('sensor', packet);
+        if(error){
+            socket.emit('err', error);
+            return;
+        }
         socket.emit('heardSensor', packet);
     });
 });
@@ -63,7 +75,13 @@ io.of('/consumer').on('connect', function(socket){
             socket.emit('auth-success');
         }
     }).on('control', function(packet){
-        validator.validatePacket('control', packet);
+        var error;
+
+        error = validator.validatePacket('control', packet);
+        if(error){
+            socket.emit('err', error);
+            return;
+        }
         socket.emit('heardControl', packet);
         if(packet.subtype === 'triggerAuthSuccess'){
             socket.emit('auth-success');
