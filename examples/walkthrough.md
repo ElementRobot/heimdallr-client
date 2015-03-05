@@ -67,7 +67,7 @@ function handleResponse(err, res, body){
 }
 
 options = {
-    url: 'http://heimdallr.skyforge.co/api/v1/provider/' + uuids.provider + '/subtype-schemas',
+    url: 'https://heimdallr.skyforge.co/api/v1/provider/' + uuids.provider + '/subtype-schemas',
     encoding: 'utf-8',
     headers: {
         'content-type': 'application/json',
