@@ -1,5 +1,5 @@
 ## Overview
-Heimdallr is a system built on top of socket.io for transferring and storing data in real-time. It connects a network of providers to a network of consumers. A provider is a source of data. The provider sends that data to the Heimdallr server, which then stores it and relays it to any consumers that are currently subscribed to that particular provider. If you would like to get started, request an authentication token by emailing [us](mailto:heimdallr@elementrobot.com)
+Heimdallr is a system built on top of socket.io for transferring and storing data in real-time. It connects a network of providers to a network of consumers. A provider is a source of data. The provider sends that data to the Heimdallr server, which then stores it and relays it to any consumers that are currently subscribed to that particular provider. If you would like to get started, request an authentication token by emailing [us](mailto:heimdallr@elementrobot.com).
 
 ## Usage
 ### In the browser

@@ -31,7 +31,8 @@
     "src",
     "tests",
     "gulpfile.js",
-    "package.json"
+    "package.json",
+    "index.html"
   ],
   "dependencies": {}
 }
