@@ -40,7 +40,7 @@ provider.on('err', function(err){
 
 // Make a fake temperature every second and send the measured value to the Heimdallr server
 (function readTemperature(){
-    console.log('sending temperature');
+    console.log('PROVIDER: sending temperature');
     provider.sendSensor('temperature', Math.random() * 40 + 50);
     setTimeout(readTemperature, 1 * 1000);
 })();
@@ -62,7 +62,7 @@ consumer.on('err', function(err){
     consumer.setFilter(uuids.provider, {sensor: ['accelerometer']});
 }).on('sensor', function(packet){
     // packet.provider tells us who sent the sensor packet.
-    console.log('%s: %s', packet.subtype, packet.data);
+    console.log('RECVD %s:', packet.subtype, packet.data);
 }).on('stream', function(packet){
     // packet also has a provider field that indicates the source
     console.log(packet.stream.toString('base64'));
