@@ -18,9 +18,7 @@ io.of('/provider').on('connect', function(socket){
             return;
         }
         packet.token = packet.token.replace('-token', '');
-        if(packet.token !== 'wait'){
-            socket.emit('auth-success');
-        }
+        socket.emit('auth-success');
     }).on('event', function(packet){
         var error;
 
@@ -71,9 +69,7 @@ io.of('/consumer').on('connect', function(socket){
             return;
         }
         packet.token = packet.token.replace('-token', '');
-        if(packet.token !== 'wait'){
-            socket.emit('auth-success');
-        }
+        socket.emit('auth-success');
     }).on('control', function(packet){
         var error;
 
@@ -133,8 +129,9 @@ describe('Heimdallr Provider', function(){
 
     beforeEach(function(done){
         provider = new heimdallrClient.Provider(
-            'test-token', {'force new connection': true}
+            'valid-token', {'force new connection': true}
         );
+        provider.connect();
         done();
     });
 
@@ -164,7 +161,7 @@ describe('Heimdallr Provider', function(){
             heardSensor = false;
 
         // Have to make a provider that will wait for this test
-        provider = new heimdallrClient.Provider('wait-token');
+        provider = new heimdallrClient.Provider('valid-token');
         provider.on('heardEvent', function(){
             // Can't fully trust either
             assert(ready, 'sent event before authorization');
@@ -179,7 +176,7 @@ describe('Heimdallr Provider', function(){
         // Timing is everything
         setTimeout(function(){
             ready = true;
-            provider.connection.emit('authorize', {'token': 'test-token'});
+            provider.connect();
         }, 100);
     });
 
@@ -212,8 +209,9 @@ describe('Heimdallr Consumer', function(){
 
     beforeEach(function(done){
         consumer = new heimdallrClient.Consumer(
-            'test-token', {'force new connection': true}
+            'valid-token', {'force new connection': true}
         );
+        consumer.connect();
         done();
     });
 
@@ -267,7 +265,7 @@ describe('Heimdallr Consumer', function(){
             heardControl = false;
 
         // Have to make a consumer that will wait for this test
-        consumer = new heimdallrClient.Consumer('wait-token');
+        consumer = new heimdallrClient.Consumer('valid-token');
         consumer.on('heardControl', function(){
             // Can't fully trust either
             assert(ready, 'sent control before authorization');
@@ -278,7 +276,7 @@ describe('Heimdallr Consumer', function(){
         // Timing is everything
         setTimeout(function(){
             ready = true;
-            consumer.connection.emit('authorize', {'token': 'test-token'});
+            consumer.connect();
         }, 100);
     });
 
