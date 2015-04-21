@@ -6,6 +6,5 @@
     "predef": [
         "require",
         "ArrayBuffer"
-    ],
-    "regexp": true
+    ]
 }
