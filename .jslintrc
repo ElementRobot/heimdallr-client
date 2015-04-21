@@ -1,0 +1,11 @@
+{
+    "browser": true,
+    "nomen": true,
+    "node": true,
+    "plusplus": true,
+    "predef": [
+        "require",
+        "ArrayBuffer"
+    ],
+    "regexp": true
+}

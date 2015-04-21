@@ -1,3 +1,5 @@
+"use strict";
+
 var request = require('request'),
     tokens = {
         consumer: '7c5ffd18-ed5c-4146-9610-5beabdd9099a',
@@ -8,7 +10,8 @@ var request = require('request'),
         provider: 'f2af84a5-b361-4875-bf5a-05fa9949facb'
     },
     schemas,
-    options;
+    options,
+    packetType;
 
 schemas = {
     event: {
@@ -23,7 +26,7 @@ schemas = {
                 x: {type: 'number'},
                 y: {type: 'number'},
                 z: {type: 'number'}
-           }
+            }
         }
     },
     control: {
@@ -39,9 +42,13 @@ schemas = {
     }
 };
 
-function handleResponse(err, res, body){
-    if(err) console.log('ERROR:', err);
-    console.log('STATUS:', res.statusCode);
+function handleResponse(err, res) {
+    if (err) {
+        console.log('ERROR:', err);
+    }
+    if (res) {
+        console.log('STATUS:', res.statusCode);
+    }
 }
 
 options = {
@@ -54,7 +61,9 @@ options = {
     json: true
 };
 
-for(var packetType in schemas){
-    options.body = {packetType: packetType, subtypeSchemas: schemas[packetType]};
-    request.post(options, handleResponse);
+for (packetType in schemas) {
+    if (schemas.hasOwnProperty(packetType)) {
+        options.body = {packetType: packetType, subtypeSchemas: schemas[packetType]};
+        request.post(options, handleResponse);
+    }
 }

@@ -6,3 +6,4 @@ tests
 bower.json
 gulpfile.js
 index.html
+.jslintrc

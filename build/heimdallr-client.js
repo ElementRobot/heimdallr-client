@@ -3,6 +3,7 @@ module.exports = _dereq_('./lib/heimdallr-client.js');
 
 },{"./lib/heimdallr-client.js":2}],2:[function(_dereq_,module,exports){
 /** @module heimdallrClient */
+"use strict";
 
 var io = _dereq_('socket.io-client'),
     parseURL = _dereq_('url').parse;
@@ -30,9 +31,10 @@ var io = _dereq_('socket.io-client'),
  * provider and contains information about the state of the provider. Event 
  * packets are used to transmit discrete, persistent, stateful information 
  * about the provider. For instance a provider may send an event packet with a
- * <tt>'locked'</tt> subtype and data of <tt>'true'</tt>. This locked state will persist in 
- * Heimdallr until the provider sends another event packet with a <tt>'locked'</tt> subtype.
- * <br><br>
+ * <tt>'locked'</tt> subtype and data of <tt>'true'</tt>. This locked state
+ * will persist in 
+ * Heimdallr until the provider sends another event packet with a
+ * <tt>'locked'</tt> subtype. <br><br>
  * A consumer can listen for event packets by specifying <tt>msgName</tt>
  * as <tt>'event'</tt> when calling the
  * [on]{@link module:heimdallrClient~Client#on} function. In addition to the
@@ -119,6 +121,41 @@ var io = _dereq_('socket.io-client'),
 
 
 /**
+ * Decorator that creates a function which will wait until the Client is
+ * ready to to call the input <tt>fn</tt>. Any calls to the decorated function
+ * will check if the client is ready. If it is ready, it will call
+ * the function immediately. If it is not, it will add it to a
+ * queue of callbacks that will be called once the Client is ready.
+ * The client is ready once it has connected to the Heimdallr
+ * server and received an 'auth-success' socket.io message.
+ * 
+ * @func onReady
+ * @private
+ * @arg {function} fn - Function to decorate.
+ * @return {function} The decorated function that will postpone calls to it
+ *     until the client is ready.
+ */
+function onReady(fn) {
+    return function () {
+        // By assinging `this` to client, we can force this scope to be
+        // preserved. Otherwise, if the client isn't ready and the function
+        // gets pushed onto `readyCallbacks`, `this` will be the global object
+        // when the `readyCallbacks` are finally called.
+        var client = this,
+            args = Array.prototype.slice.call(arguments);
+        if (client.ready) {
+            fn.apply(client, args);
+        } else {
+            client.readyCallbacks.push(function () {
+                fn.apply(client, args);
+            });
+        }
+        return client;
+    };
+}
+
+
+/**
  * The Client constructor performs some initialization including setting up a
  * default error listener.
  *
@@ -129,7 +166,7 @@ var io = _dereq_('socket.io-client'),
  * @arg {object} [options] - socket.io options passed to io.Manager.
  * @return {module:heimdallrClient~Client} A new Heimdallr Client object.
  */
-function Client(token, options){
+function Client(token, options) {
     var manager;
 
     options = options || {};
@@ -141,13 +178,15 @@ function Client(token, options){
     this.token = token;
     this.connection = manager.socket(parseURL(this.url).pathname);
 
-    this.connection.on('err', function(err){
-        if(err instanceof Error){
+    this.connection.on('err', function (err) {
+        if (err instanceof Error) {
             throw err;
         }
-        else if(err instanceof Object && err.hasOwnProperty('message')){
+
+        if (err instanceof Object && err.hasOwnProperty('message')) {
             throw new Error(err.message);
         }
+
         throw new Error(err);
     });
 }
@@ -161,12 +200,13 @@ function Client(token, options){
  * @return {module:heimdallrClient~Client}
  */
 Client.prototype.connect = function connect() {
-    this.connection.on('connect', function(){
+    this.connection.on('connect', function () {
         this.connection.emit(
-            'authorize', {'token': this.token, 'authSource': this.authSource}
+            'authorize',
+            {token: this.token, authSource: this.authSource}
         );
-        this.connection.on('auth-success', function callReady(){
-            this.readyCallbacks.map(function(fn, i){
+        this.connection.on('auth-success', function callReady() {
+            this.readyCallbacks.map(function (fn) {
                 fn();
             });
             this.readyCallbacks = [];
@@ -191,11 +231,10 @@ Client.prototype.connect = function connect() {
  *     to run when socket.io message is heard.
  * @return {module:heimdallrClient~Client}
  */
-Client.prototype.on = function on(msgName, fn){
-    if(msgName === 'ready'){
+Client.prototype.on = function on(msgName, fn) {
+    if (msgName === 'ready') {
         onReady(fn)();
-    }
-    else {
+    } else {
         this.connection.on(msgName, fn);
     }
 
@@ -211,10 +250,10 @@ Client.prototype.on = function on(msgName, fn){
  * @arg {function} [fn] - Specific handler to remove.
  * @return {module:heimdallrClient~Client}
  */
- Client.prototype.removeListener = function removeListener(msgName, fn) {
-     this.connection.removeListener(msgName, fn);
-     return this;
- };
+Client.prototype.removeListener = function removeListener(msgName, fn) {
+    this.connection.removeListener(msgName, fn);
+    return this;
+};
 
 /**
  * @private
@@ -241,7 +280,7 @@ Client.prototype.authSource = 'skyforge';
  * @arg {object} [options] - socket.io options passed to io.connect.
  * @return {module:heimdallrClient~Provider} A new Heimdallr Provider object.
  */
-function Provider(){
+function Provider() {
     this.url += '/provider';
     Client.apply(this, arguments);
 }
@@ -258,7 +297,7 @@ Provider.prototype = Client.prototype;
  * @arg {json} data - The event packet data.
  * @return {module:heimdallrClient~Provider}
  */
-Provider.prototype.sendEvent = onReady(function sendEvent(subtype, data){
+Provider.prototype.sendEvent = onReady(function sendEvent(subtype, data) {
     this.connection.emit('event', {
         'subtype': subtype,
         'data': data,
@@ -277,7 +316,7 @@ Provider.prototype.sendEvent = onReady(function sendEvent(subtype, data){
  * @arg {json} data - The sensor packet data.
  * @return {module:heimdallrClient~Provider}
  */
-Provider.prototype.sendSensor = onReady(function sendSensor(subtype, data){
+Provider.prototype.sendSensor = onReady(function sendSensor(subtype, data) {
     this.connection.emit('sensor', {
         'subtype': subtype,
         'data': data,
@@ -297,7 +336,7 @@ Provider.prototype.sendSensor = onReady(function sendSensor(subtype, data){
  * @arg {} data - The binary data to be sent.
  * @return {module:heimdallrClient~Provider}
  */
-Provider.prototype.sendStream = onReady(function sendStream(data){
+Provider.prototype.sendStream = onReady(function sendStream(data) {
     this.connection.emit('stream', data);
 });
 
@@ -313,7 +352,7 @@ Provider.prototype.sendStream = onReady(function sendStream(data){
  *     completed.
  * @return {module:heimdallrClient~Provider}
  */
-Provider.prototype.completed = onReady(function completed(uuid){
+Provider.prototype.completed = onReady(function completed(uuid) {
     this.connection.emit('event', {
         'subtype': 'completed',
         'data': uuid,
@@ -333,7 +372,7 @@ Provider.prototype.completed = onReady(function completed(uuid){
  * @arg {object} [options] - socket.io options passed to io.connect.
  * @return {module:heimdallrClient~Consumer} A new Heimdallr Consumer object.
  */
-function Consumer(){
+function Consumer() {
     this.url += '/consumer';
     Client.apply(this, arguments);
 }
@@ -348,7 +387,7 @@ Consumer.prototype = Client.prototype;
  * @arg {string} uuid - UUID of the provider to subscribe to.
  * @return {module:heimdallrClient~Consumer}
  */
-Consumer.prototype.subscribe = onReady(function subscribe(uuid){
+Consumer.prototype.subscribe = onReady(function subscribe(uuid) {
     this.connection.emit('subscribe', {'provider': uuid});
 });
 
@@ -360,7 +399,7 @@ Consumer.prototype.subscribe = onReady(function subscribe(uuid){
  * @arg {string} uuid - UUID of the provider to unsubscribe from.
  * @return {module:heimdallrClient~Consumer}
  */
-Consumer.prototype.unsubscribe = onReady(function unsubscribe(uuid){
+Consumer.prototype.unsubscribe = onReady(function unsubscribe(uuid) {
     this.connection.emit('unsubscribe', {'provider': uuid});
 });
 
@@ -377,9 +416,11 @@ Consumer.prototype.unsubscribe = onReady(function unsubscribe(uuid){
  *     subtypes that you want to receive.
  * @return {module:heimdallrClient~Consumer}
  */
-Consumer.prototype.setFilter = onReady(function setFilter(uuid, filter){
+Consumer.prototype.setFilter = onReady(function setFilter(uuid, filter) {
     filter = filter || {};
-    if(!(filter.event instanceof Array) && !(filter.sensor instanceof Array)){
+    if (
+        !(filter.event instanceof Array) && !(filter.sensor instanceof Array)
+    ) {
         throw new Error('Invalid `filter`');
     }
     filter.provider = uuid;
@@ -396,8 +437,8 @@ Consumer.prototype.setFilter = onReady(function setFilter(uuid, filter){
  * @arg {array} subtypes - array of event packet subtypes to get.
  * @return {module:heimdallrClient~Consumer}
  */
-Consumer.prototype.getState = onReady(function getState(uuid, subtypes){
-    if(!(subtypes instanceof Array)){
+Consumer.prototype.getState = onReady(function getState(uuid, subtypes) {
+    if (!(subtypes instanceof Array)) {
         throw new Error('`subtypes` must be an array');
     }
     this.connection.emit('getState', {'provider': uuid, 'subtypes': subtypes});
@@ -423,18 +464,20 @@ Consumer.prototype.getState = onReady(function getState(uuid, subtypes){
  *     should persist.
  * @return {module:heimdallrClient~Consumer}
  */
-Consumer.prototype.sendControl = onReady(function sendControl(uuid, subtype, data, persistent){
-    var control = {
-        'subtype': subtype,
-        'data': data,
-        'provider': uuid
-    };
+Consumer.prototype.sendControl = onReady(
+    function sendControl(uuid, subtype, data, persistent) {
+        var control = {
+            'subtype': subtype,
+            'data': data,
+            'provider': uuid
+        };
 
-    if(persistent){
-        control.persistent = true;
+        if (persistent) {
+            control.persistent = true;
+        }
+        this.connection.emit('control', control);
     }
-    this.connection.emit('control', control);
-});
+);
 
 /**
  * Join binary data stream from a provider. If this is the first
@@ -445,7 +488,7 @@ Consumer.prototype.sendControl = onReady(function sendControl(uuid, subtype, dat
  * @arg {string} uuid - UUID of the provider to join stream for.
  * @return {module:heimdallrClient~Consumer}
  */
-Consumer.prototype.joinStream = onReady(function joinStream(uuid){
+Consumer.prototype.joinStream = onReady(function joinStream(uuid) {
     this.connection.emit('joinStream', {'provider': uuid});
 });
 
@@ -459,51 +502,14 @@ Consumer.prototype.joinStream = onReady(function joinStream(uuid){
  * @arg {string} uuid - UUID of the provider to leave stream for.
  * @return {module:heimdallrClient~Consumer}
  */
-Consumer.prototype.leaveStream = onReady(function leaveStream(uuid){
+Consumer.prototype.leaveStream = onReady(function leaveStream(uuid) {
     this.connection.emit('leaveStream', {'provider': uuid});
 });
-
-
-/**
- * Decorator that creates a function which will wait until the Client is
- * ready to to call the input <tt>fn</tt>. Any calls to the decorated function
- * will check if the client is ready. If it is ready, it will call
- * the function immediately. If it is not, it will add it to a
- * queue of callbacks that will be called once the Client is ready.
- * The client is ready once it has connected to the Heimdallr
- * server and received an 'auth-success' socket.io message.
- * 
- * @func onReady
- * @private
- * @arg {function} fn - Function to decorate.
- * @return {function} The decorated function that will postpone calls to it
- *     until the client is ready.
- */
-function onReady(fn){
-    return function(){
-        // By assinging `this` to client, we can force this scope to be
-        // preserved. Otherwise, if the client isn't ready and the function
-        // gets pushed onto `readyCallbacks`, `this` will be the global object
-        // when the `readyCallbacks` are finally called.
-        var client = this,
-            args = Array.prototype.slice.call(arguments);
-        if(client.ready){
-            fn.apply(client, args);
-        }
-        else {
-            client.readyCallbacks.push(function(){
-                fn.apply(client, args);
-            });
-        }
-        return client;
-    };
-}
 
 module.exports = {
     Provider: Provider,
     Consumer: Consumer
 };
-
 },{"socket.io-client":8,"url":7}],3:[function(_dereq_,module,exports){
 (function (global){
 /*! http://mths.be/punycode v1.2.4 by @mathias */

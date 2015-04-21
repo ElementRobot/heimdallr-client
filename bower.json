@@ -24,6 +24,7 @@
   ],
   "ignore": [
     "**/.*",
+    ".jslintrc",
     "node_modules",
     "bower_components",
     "docs",
