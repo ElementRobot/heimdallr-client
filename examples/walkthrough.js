@@ -45,6 +45,7 @@ provider.on('control', function (packet) {
         console.log('PROVIDER: completed persistent control');
     }
 });
+provider.connect();
 
 // Make a fake temperature every second and send the measured value to the Heimdallr server
 (function readTemperature() {
@@ -70,6 +71,7 @@ consumer.on('auth-success', function () {
     // packet.provider tells us who sent the sensor packet.
     console.log('RECVD %s:', packet.subtype, packet.data);
 });
+consumer.connect();
 
 consumer.sendControl(uuids.provider, 'accelerate', {direction: 'x', magnitude: 10});
 consumer.sendControl(uuids.provider, 'turnRight', null);

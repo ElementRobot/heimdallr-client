@@ -42,6 +42,7 @@ provider.on('err', function (err) {
         streaming = false;
     }
 });
+provider.connect();
 
 // Make a fake temperature every second and send the measured value to the Heimdallr server
 (function readTemperature() {
@@ -72,6 +73,7 @@ consumer.on('err', function (err) {
     // packet also has a provider field that indicates the source
     console.log(packet.stream.toString('base64'));
 });
+consumer.connect();
 
 // Want to stream data from this provider
 consumer.joinStream(uuids.provider);

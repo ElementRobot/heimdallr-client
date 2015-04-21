@@ -1,5 +1,5 @@
 ## Overview
-This tutorial should demonstrate most of the functionality of Heimdallr-Client. This walkthrough will demonstrate using Heimdallr-Client in node.js. Heimdallr-Client can also be used in the browser and is available as a bower package. The authentication keys are fake so copy-pasting the code will not work. To get your own authentication keys just shoot us an [email](mailto:heimdallr@elementrobot.com).
+This tutorial should demonstrate most of the functionality of Heimdallr-Client. It will demonstrate using Heimdallr-Client in node.js. Heimdallr-Client can also be used in the browser and is available as a bower package. The authentication keys are fake so copy-pasting the code will not work. To get your own authentication keys just shoot us an [email](mailto:heimdallr@elementrobot.com).
 
 ## Getting Started
 Install [node](http://nodejs.org/) if you don't have it. Then make a directory for your Heimdallr project to live in and grab the node packages we will be using:
@@ -30,7 +30,8 @@ var request = require('request'),
         provider: 'f2af84a5-b361-4875-bf5a-05fa9949facb'
     },
     schemas,
-    options;
+    options,
+    packetType;
 
 schemas = {
     event: {
@@ -45,7 +46,7 @@ schemas = {
                 x: {type: 'number'},
                 y: {type: 'number'},
                 z: {type: 'number'}
-           }
+            }
         }
     },
     control: {
@@ -61,9 +62,13 @@ schemas = {
     }
 };
 
-function handleResponse(err, res, body){
-    if(err) console.log('ERROR:', err);
-    console.log('STATUS:', res.statusCode);
+function handleResponse(err, res) {
+    if (err) {
+        console.log('ERROR:', err);
+    }
+    if (res) {
+        console.log('STATUS:', res.statusCode);
+    }
 }
 
 options = {
@@ -76,9 +81,11 @@ options = {
     json: true
 };
 
-for(var packetType in schemas){
-    options.body = {packetType: packetType, subtypeSchemas: schemas[packetType]};
-    request.post(options, handleResponse);
+for (packetType in schemas) {
+    if (schemas.hasOwnProperty(packetType)) {
+        options.body = {packetType: packetType, subtypeSchemas: schemas[packetType]};
+        request.post(options, handleResponse);
+    }
 }
 ```
 
@@ -120,15 +127,15 @@ var heimdallrClient = require('heimdallr-client'),
 
 // Callbacks for the different control packet subtypes
 controlHandler = {
-    turnLeft: function(){
+    turnLeft: function () {
         // It's a NASCAR thing
         provider.sendEvent('status', 'turned left');
     },
-    turnRight: function(){
+    turnRight: function () {
         // It's a Zoolander thing
         provider.sendEvent('status', 'turned right');
     },
-    accelerate: function(packet){
+    accelerate: function (packet) {
         var accelerometerReading = {x: 0, y: 0, z: 0};
 
         // If we accelerated, we've got power; if we decelerated, we've lost it
@@ -142,21 +149,22 @@ controlHandler = {
 
 // Make a new provider
 provider = new heimdallrClient.Provider(tokens.provider);
-provider.on('control', function(packet){
+provider.on('control', function (packet) {
     controlHandler[packet.subtype](packet);
-    if(packet.persistent){
+    if (packet.persistent) {
         // Let the Heimdallr server know the control has been completed
         provider.completed(packet.persistent);
         console.log('PROVIDER: completed persistent control');
     }
 });
+provider.connect();
 
 // Make a fake temperature every second and send the measured value to the Heimdallr server
-(function readTemperature(){
+(function readTemperature() {
     console.log('PROVIDER: sending temperature');
     provider.sendSensor('temperature', Math.random() * 40 + 50);
-    setTimeout(readTemperature, 1 * 1000);
-})();
+    setTimeout(readTemperature, 1000);
+}());
 ```
 
 close the file with Ctrl+X Y [return] and run it with
@@ -176,34 +184,34 @@ A consumer is a Heimdallr client that listens for information from providers. A 
 ```javascript
 // Make a new consumer
 consumer = new heimdallrClient.Consumer(tokens.consumer);
-consumer.on('auth-success', function(){
+consumer.on('auth-success', function () {
     // We've successfully authenticated with the Heimdallr server.
     // Now we can subscribe to providers we want to interact with.
     consumer.subscribe(uuids.provider);
-}).on('event', function(packet){
+}).on('event', function (packet) {
     // packet.provider tells us who sent the sensor packet.
-    if(packet.subtype === 'status'){
+    if (packet.subtype === 'status') {
         console.log('RECVD status:', packet.data);
-    }
-    else if(packet.subtype === 'power'){
+    } else if (packet.subtype === 'power') {
         console.log('RECVD ' + packet.data ? 'full power' : 'no power');
     }
-}).on('sensor', function(packet){
+}).on('sensor', function (packet) {
     // packet.provider tells us who sent the sensor packet.
     console.log('RECVD %s:', packet.subtype, packet.data);
 });
+consumer.connect();
 
 consumer.sendControl(uuids.provider, 'accelerate', {direction: 'x', magnitude: 10});
 consumer.sendControl(uuids.provider, 'turnRight', null);
 consumer.sendControl(uuids.provider, 'turnLeft', null);
 consumer.sendControl(uuids.provider, 'accelerate', {direction: 'x', magnitude: 0});
 
-setTimeout(function(){
+setTimeout(function () {
     console.log('GETTING STATE');
     consumer.getState(uuids.provider, ['status', 'power']);
 }, 2 * 1000);
 
-setTimeout(function(){
+setTimeout(function () {
     // Sends a persistent control
     consumer.sendControl(uuids.provider, 'turnRight', null, true);
 }, 3 * 1000);
