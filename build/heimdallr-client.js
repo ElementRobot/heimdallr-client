@@ -169,6 +169,8 @@ function onReady(fn) {
 function Client(token, options) {
     var manager;
 
+    // The autoConnect = false allows us to create a socket object that
+    // doesn't try to immediately connect to the server.
     options = options || {};
     options.autoConnect = false;
     manager = new io.Manager(this.url, options);
@@ -179,6 +181,9 @@ function Client(token, options) {
     this.connection = manager.socket(parseURL(this.url).pathname);
 
     this.connection.on('err', function (err) {
+        // Unfortunately we haven't come up with a good standard format for
+        // errors on the server side and so for the time being they are coming
+        // across in a variety of forms.
         if (err instanceof Error) {
             throw err;
         }
