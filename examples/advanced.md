@@ -22,10 +22,7 @@ function stream() {
 }
 
 provider = new heimdallrClient.Provider(tokens.provider);
-provider.on('err', function (err) {
-    // Faceplant
-    throw new Error(err);
-}).on('control', function (packet) {
+provider.on('control', function (packet) {
     if (packet.subtype === 'stream' && packet.data === 'start') {
         streaming = true;
         stream();
