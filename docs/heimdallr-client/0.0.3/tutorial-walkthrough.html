@@ -1,26 +1,39 @@
-## Overview
-This tutorial should demonstrate most of the functionality of Heimdallr-Client. It will demonstrate using Heimdallr-Client in node.js. Heimdallr-Client can also be used in the browser and is available as a bower package. The authentication keys are fake so copy-pasting the code will not work. To get your own authentication keys just shoot us an [email](mailto:heimdallr@elementrobot.com).
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Heimdall-Client: Tutorial: walkthrough</title>
 
-## Getting Started
-Install [node](http://nodejs.org/) if you don't have it. Then make a directory for your Heimdallr project to live in and grab the node packages we will be using:
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
 
-```bash
-mkdir heimdallr-project
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Tutorial: walkthrough</h1>
+
+    <section>
+
+<header>
+    
+
+</header>
+
+<article>
+    <h2>Overview</h2><p>This tutorial should demonstrate most of the functionality of Heimdallr-Client. It will demonstrate using Heimdallr-Client in node.js. Heimdallr-Client can also be used in the browser and is available as a bower package. The authentication keys are fake so copy-pasting the code will not work. To get your own authentication keys just shoot us an <a href="mailto:heimdallr@elementrobot.com">email</a>.</p>
+<h2>Getting Started</h2><p>Install <a href="http://nodejs.org/">node</a> if you don't have it. Then make a directory for your Heimdallr project to live in and grab the node packages we will be using:</p>
+<pre class="prettyprint source lang-bash"><code>mkdir heimdallr-project
 cd heimdallr-project
-npm install heimdallr-client request --save
-```
-
-Now open a new file
-
-```bash
-nano upload_schemas.js
-```
-
-add the folowing code
-
-
-```javascript
-var request = require('request'),
+npm install heimdallr-client request --save</code></pre><p>Now open a new file</p>
+<pre class="prettyprint source lang-bash"><code>nano upload_schemas.js</code></pre><p>add the folowing code</p>
+<pre class="prettyprint source lang-javascript"><code>var request = require('request'),
     tokens = {
         consumer: '7c5ffd18-ed5c-4146-9610-5beabdd9099a',
         provider: 'aac995a3-03f4-4f78-a793-fe7ec8d4f961'
@@ -86,33 +99,16 @@ for (packetType in schemas) {
         options.body = {packetType: packetType, subtypeSchemas: schemas[packetType]};
         request.post(options, handleResponse);
     }
-}
-```
-
-close the file with Ctrl+X Y [return] and run it with
-
-```bash
-node upload_schemas.js
+}</code></pre><p>close the file with Ctrl+X Y [return] and run it with</p>
+<pre class="prettyprint source lang-bash"><code>node upload_schemas.js
 
 # output
 # STATUS: 200
 # STATUS: 200
-# STATUS: 200
-```
-
-What this does is tell the Heimdallr server what to expect for specific packet subtypes for a given provider. So now it knows that if it recieves an event packet with a status subtype that the data field should be a string. This is accomplished using [JSON Schema](http://json-schema.org/). If you haven't checked it out before, we strongly recommend doing so. A useful tool for getting acquainted with JSON schema is [JSON Schema Lint](http://jsonschemalint.com/). Schemas only need to be uploaded once per provider. New schemas can be uploaded at anytime. Keep in mind that any old schemas will be erased.
-
-## Create a Provider
-Now it's time to make a mock provider. The provider is a Heimdallr client that generates information. This information is sent to the Heimdallr server where it is stored. So make another file
-
-```bash
-nano walkthrough.js
-```
-
-add the following code
-
-```javascript
-var heimdallrClient = require('heimdallr-client'),
+# STATUS: 200</code></pre><p>What this does is tell the Heimdallr server what to expect for specific packet subtypes for a given provider. So now it knows that if it recieves an event packet with a status subtype that the data field should be a string. This is accomplished using <a href="http://json-schema.org/">JSON Schema</a>. If you haven't checked it out before, we strongly recommend doing so. A useful tool for getting acquainted with JSON schema is <a href="http://jsonschemalint.com/">JSON Schema Lint</a>. Schemas only need to be uploaded once per provider. New schemas can be uploaded at anytime. Keep in mind that any old schemas will be erased.</p>
+<h2>Create a Provider</h2><p>Now it's time to make a mock provider. The provider is a Heimdallr client that generates information. This information is sent to the Heimdallr server where it is stored. So make another file</p>
+<pre class="prettyprint source lang-bash"><code>nano walkthrough.js</code></pre><p>add the following code</p>
+<pre class="prettyprint source lang-javascript"><code>var heimdallrClient = require('heimdallr-client'),
     tokens = {
         consumer: '7c5ffd18-ed5c-4146-9610-5beabdd9099a',
         provider: 'aac995a3-03f4-4f78-a793-fe7ec8d4f961'
@@ -164,25 +160,13 @@ provider.connect();
     console.log('PROVIDER: sending temperature');
     provider.sendSensor('temperature', Math.random() * 40 + 50);
     setTimeout(readTemperature, 1000);
-}());
-```
-
-close the file with Ctrl+X Y [return] and run it with
-
-```bash
-node walkthrough.js
+}());</code></pre><p>close the file with Ctrl+X Y [return] and run it with</p>
+<pre class="prettyprint source lang-bash"><code>node walkthrough.js
 
 # output
-# PROVIDER: sending temperature
-```
-
-When you've had enough, hit Ctrl+C to make it stop. So that's cool and all but it isn't really doing anything. Next we are going to add a consumer to the mix to make it a little more interesting.
-
-## Create a Consumer
-A consumer is a Heimdallr client that listens for information from providers. A consumer can also send controls to a provider. To see this in action append the following code to your walkthrough.js file
-
-```javascript
-// Make a new consumer
+# PROVIDER: sending temperature</code></pre><p>When you've had enough, hit Ctrl+C to make it stop. So that's cool and all but it isn't really doing anything. Next we are going to add a consumer to the mix to make it a little more interesting.</p>
+<h2>Create a Consumer</h2><p>A consumer is a Heimdallr client that listens for information from providers. A consumer can also send controls to a provider. To see this in action append the following code to your walkthrough.js file</p>
+<pre class="prettyprint source lang-javascript"><code>// Make a new consumer
 consumer = new heimdallrClient.Consumer(tokens.consumer);
 consumer.on('auth-success', function () {
     // We've successfully authenticated with the Heimdallr server.
@@ -214,13 +198,8 @@ setTimeout(function () {
 setTimeout(function () {
     // Sends a persistent control
     consumer.sendControl(uuids.provider, 'turnRight', null, true);
-}, 3 * 1000);
-```
-
-and run it with
-
-```bash
-node walkthrough.js
+}, 3 * 1000);</code></pre><p>and run it with</p>
+<pre class="prettyprint source lang-bash"><code>node walkthrough.js
 
 # output
 # PROVIDER: sending temperature
@@ -240,11 +219,25 @@ node walkthrough.js
 # PROVIDER: sending temperature
 # PROVIDER completed persistent control
 # RECVD temperature: 72.37050646916032
-# RECVD status: turned right
-```
+# RECVD status: turned right</code></pre><p>Now when you run it you should see some more interesting output. You can see that the provider is responding to the controls sent by the consumer. And you can see that the consumer is receiving information generated by the provider. Play around with the values, add controls, event and sensors to get a feel for how everthing works together. For more features see the <a href="tutorial-advanced.html">advanced</a> tutorial.</p>
+</article>
 
-Now when you run it you should see some more interesting output. You can see that the provider is responding to the controls sent by the consumer. And you can see that the consumer is receiving information generated by the provider. Play around with the values, add controls, event and sensors to get a feel for how everthing works together. For more features see the {@tutorial advanced} tutorial.
+</section>
 
+</div>
 
+<nav>
+    <h2><a href="index.html">Heimdallr-Client</a></h2><h3>Modules</h3><ul><li><a href="module-heimdallrClient.html">heimdallrClient</a></li></ul><h3>Classes</h3><ul><li><a href="module-heimdallrClient-Client.html">Client</a></li><li><a href="module-heimdallrClient-Consumer.html">Consumer</a></li><li><a href="module-heimdallrClient-Provider.html">Provider</a></li></ul><h3>Tutorials</h3><ul><li><a href="tutorial-advanced.html">advanced</a></li><li><a href="tutorial-walkthrough.html">walkthrough</a></li></ul>
+</nav>
 
+<br class="clear">
 
+<footer>
+    ©2015 Element Robot LLC<br>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.3.0-beta1</a> on Wed Apr 22 2015 08:31:58 GMT-0700 (PDT)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

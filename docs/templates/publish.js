@@ -11,7 +11,6 @@ var template = require('jsdoc/template');
 var util = require('util');
 
 var htmlsafe = helper.htmlsafe;
-var linkto = helper.linkto;
 var resolveAuthorLinks = helper.resolveAuthorLinks;
 var scopeToPunc = helper.scopeToPunc;
 var hasOwnProp = Object.prototype.hasOwnProperty;
@@ -20,6 +19,11 @@ var data;
 var view;
 
 var outdir = path.normalize(env.opts.destination);
+
+function linkto(){
+    arguments[1] = arguments[1].replace('module:', '');
+    return helper.linkto.apply(undefined, arguments);
+}
 
 function find(spec) {
     return helper.find(data, spec);

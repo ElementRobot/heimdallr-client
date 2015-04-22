@@ -1,6 +1,6 @@
 {
   "name": "heimdallr-client",
-  "version": "0.0.0",
+  "version": "0.0.3",
   "homepage": "https://heimdallr.skyforge.co",
   "repository": {
     "type": "git",
@@ -24,6 +24,7 @@
   ],
   "ignore": [
     "**/.*",
+    ".jslintrc",
     "node_modules",
     "bower_components",
     "docs",

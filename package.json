@@ -1,6 +1,6 @@
 {
   "name": "heimdallr-client",
-  "version": "0.0.0",
+  "version": "0.0.3",
   "description": "A node implementation of a Heimdallr client",
   "homepage": "https://heimdallr.skyforge.co",
   "repository": {
