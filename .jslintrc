@@ -4,7 +4,12 @@
     "node": true,
     "plusplus": true,
     "predef": [
-        "require",
-        "ArrayBuffer"
+        "after",
+        "ArrayBuffer",
+        "before",
+        "beforeEach",
+        "describe",
+        "it",
+        "require"
     ]
 }

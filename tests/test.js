@@ -1,3 +1,5 @@
+"use strict";
+
 var PORT = 3000,
     assert = require('chai').assert,
     domain = require('domain').create(),
@@ -11,37 +13,35 @@ var PORT = 3000,
 heimdallrClient.Provider.prototype.url = 'http://localhost:' + PORT;
 
 // Provider section
-io.of('/provider').on('connect', function(socket){
-    socket.on('authorize', function(packet){
-        if(!packet.token){
+io.of('/provider').on('connect', function (socket) {
+    socket.on('authorize', function (packet) {
+        if (!packet.token) {
             socket.emit('err', 'No token provided');
             return;
         }
         packet.token = packet.token.replace('-token', '');
         socket.emit('auth-success');
-    }).on('event', function(packet){
+    }).on('event', function (packet) {
         var error;
 
         error = validator.validatePacket('event', packet);
-        if(error){
+        if (error) {
             socket.emit('err', error);
             return;
         }
         socket.emit('heardEvent', packet);
-        if(packet.subtype === 'triggerAuthSuccess'){
+        if (packet.subtype === 'triggerAuthSuccess') {
             socket.emit('auth-success');
-        }
-        else if(packet.subtype === 'triggerError'){
+        } else if (packet.subtype === 'triggerError') {
             socket.emit('err', 'errorTriggered');
-        }
-        else if(packet.subtype === 'ping'){
+        } else if (packet.subtype === 'ping') {
             socket.emit('pong');
         }
-    }).on('sensor', function(packet){
+    }).on('sensor', function (packet) {
         var error;
 
         error = validator.validatePacket('sensor', packet);
-        if(error){
+        if (error) {
             socket.emit('err', error);
             return;
         }
@@ -49,55 +49,53 @@ io.of('/provider').on('connect', function(socket){
     });
 });
 
-io.of('/consumer').on('connect', function(socket){
-    function checkConsumerPacket(packet){
-        if(!packet){
+io.of('/consumer').on('connect', function (socket) {
+    function checkConsumerPacket(packet) {
+        if (!packet) {
             socket.emit('err', 'No packet provided');
             return;
         }
 
-        if(!packet.provider){
+        if (!packet.provider) {
             socket.emit('err', 'No provider specified');
             return;
         }
         socket.emit('checkedPacket', 'consumer');
     }
 
-    socket.on('authorize', function(packet){
-        if(!packet.token){
+    socket.on('authorize', function (packet) {
+        if (!packet.token) {
             socket.emit('err', 'No token provided');
             return;
         }
         packet.token = packet.token.replace('-token', '');
         socket.emit('auth-success');
-    }).on('control', function(packet){
+    }).on('control', function (packet) {
         var error;
 
         error = validator.validatePacket('control', packet);
-        if(error){
+        if (error) {
             socket.emit('err', error);
             return;
         }
         socket.emit('heardControl', packet);
-        if(packet.subtype === 'triggerAuthSuccess'){
+        if (packet.subtype === 'triggerAuthSuccess') {
             socket.emit('auth-success');
-        }
-        else if(packet.subtype === 'triggerError'){
+        } else if (packet.subtype === 'triggerError') {
             socket.emit('err', 'errorTriggered');
-        }
-        else if(packet.subtype === 'ping'){
+        } else if (packet.subtype === 'ping') {
             socket.emit('pong');
         }
-    }).on('setFilter', function(packet){
+    }).on('setFilter', function (packet) {
         checkConsumerPacket(packet);
-        if(!(packet.event instanceof Array) && !(packet.sensor instanceof Array)){
+        if (!(packet.event instanceof Array) && !(packet.sensor instanceof Array)) {
             socket.emit('err', 'Invalid `filter`');
             return;
         }
         socket.emit('checkedPacket', 'setFilter');
-    }).on('getState', function(packet){
+    }).on('getState', function (packet) {
         checkConsumerPacket(packet);
-        if(!packet.subtypes){
+        if (!packet.subtypes) {
             socket.emit('err', 'No subtypes provided');
             return;
         }
@@ -113,160 +111,159 @@ io.of('/consumer').on('connect', function(socket){
 
 // We want to wrap everything we do in a domain so we get a first look at
 // any uncaught errors
-domain.on('error', function(error){
+domain.on('error', function (error) {
     assert(error.message === 'errorTriggered', error);
     errorEmitter.emit('expectedError');
 });
 
-describe('Heimdallr Provider', function(){
+describe('Heimdallr Provider', function () {
     var provider;
 
     // This isolates our domain to the block of tests. We also exit the domain
     // after the block of tests so as to not conflict with gulp-mocha.
-    before(function(){
+    before(function () {
         domain.enter();
     });
 
-    beforeEach(function(done){
+    beforeEach(function (done) {
         provider = new heimdallrClient.Provider(
-            'valid-token', {'force new connection': true}
+            'valid-token',
+            {'force new connection': true}
         );
         provider.connect();
         done();
     });
 
-    it('sends valid event', function(done){
-        provider.on('heardEvent', function(){ done(); });
+    it('sends valid event', function (done) {
+        provider.on('heardEvent', function () { done(); });
         provider.sendEvent('test', null);
     });
 
-    it('sends valid sensor', function(done){
-        provider.on('heardSensor', function(){ done(); });
+    it('sends valid sensor', function (done) {
+        provider.on('heardSensor', function () { done(); });
         provider.sendSensor('test', null);
     });
 
-    it('sends valid completed event', function(done){
-        provider.on('heardEvent', function(){ done(); });
+    it('sends valid completed event', function (done) {
+        provider.on('heardEvent', function () { done(); });
         provider.completed('test');
     });
 
-    it('receives errors', function(done){
+    it('receives errors', function (done) {
         errorEmitter.once('expectedError', done);
         provider.sendEvent('triggerError', null);
     });
 
-    it('waits until ready', function(done){
+    it('waits until ready', function (done) {
         var ready = false,
-            heardEvent = false,
-            heardSensor = false;
+            heardEvent = false;
 
         // Have to make a provider that will wait for this test
         provider = new heimdallrClient.Provider('valid-token');
-        provider.on('heardEvent', function(){
+        provider.on('heardEvent', function () {
             // Can't fully trust either
             assert(ready, 'sent event before authorization');
             assert(provider.ready, 'sent event before ready');
             heardEvent = true;
-        }).on('heardSensor', function(){
+        }).on('heardSensor', function () {
             assert(heardEvent, 'didn\'t hear event first');
-            heardSensor = true;
             done();
         }).sendEvent('test', null).sendSensor('test', null);
 
         // Timing is everything
-        setTimeout(function(){
+        setTimeout(function () {
             ready = true;
             provider.connect();
         }, 100);
     });
 
-    it('removes listener', function(done){
-        var heardEvent = false,
-            count = 0;
+    it('removes listener', function (done) {
+        var count = 0;
 
-        provider.on('heardEvent', function(){
+        provider.on('heardEvent', function () {
             count++;
             provider.removeListener('heardEvent');
             provider.sendEvent('ping', null);
-        }).on('pong', function(){
+        }).on('pong', function () {
             assert(count === 1, 'heard the wrong number of events: ' + count);
             done();
         });
         provider.sendEvent('test', null);
     });
 
-    after(function(){
+    after(function () {
         domain.exit();
     });
 });
 
-describe('Heimdallr Consumer', function(){
+describe('Heimdallr Consumer', function () {
     var consumer;
 
-    before(function(){
+    before(function () {
         domain.enter();
     });
 
-    beforeEach(function(done){
+    beforeEach(function (done) {
         consumer = new heimdallrClient.Consumer(
-            'valid-token', {'force new connection': true}
+            'valid-token',
+            {'force new connection': true}
         );
         consumer.connect();
         done();
     });
 
-    it('sends valid control', function(done){
-        consumer.on('heardControl', function(){ done(); });
+    it('sends valid control', function (done) {
+        consumer.on('heardControl', function () { done(); });
         consumer.sendControl(validUUID, 'test', null, true);
     });
 
-    it('sends valid setFilter', function(done){
-        consumer.on('checkedPacket', function(message){
-            if(message === 'setFilter'){
+    it('sends valid setFilter', function (done) {
+        consumer.on('checkedPacket', function (message) {
+            if (message === 'setFilter') {
                 done();
             }
         });
         consumer.setFilter(validUUID, {'event': [], 'sensor': []});
     });
 
-    it('sends valid getState', function(done){
-        consumer.on('checkedPacket', function(message){
-            if(message === 'getState'){
+    it('sends valid getState', function (done) {
+        consumer.on('checkedPacket', function (message) {
+            if (message === 'getState') {
                 done();
             }
         });
         consumer.getState(validUUID, []);
     });
 
-    it('can perform subscription actions', function(done){
+    it('can perform subscription actions', function (done) {
         var subscriptionActions = [
                 'subscribe', 'unsubscribe', 'joinStream', 'leaveStream'
             ],
-            count = 0;
+            count = 0,
+            i;
 
-        consumer.on('checkedPacket', function(){
+        consumer.on('checkedPacket', function () {
             count++;
-            if(count === subscriptionActions.length){
+            if (count === subscriptionActions.length) {
                 done();
             }
         });
-        for(var i = 0; i < subscriptionActions.length; i++){
+        for (i = 0; i < subscriptionActions.length; i++) {
             consumer[subscriptionActions[i]](validUUID);
         }
     });
 
-    it('receives errors', function(done){
+    it('receives errors', function (done) {
         errorEmitter.once('expectedError', done);
         consumer.sendControl(validUUID, 'triggerError', null);
     });
 
-    it('waits until ready', function(done){
-        var ready = false,
-            heardControl = false;
+    it('waits until ready', function (done) {
+        var ready = false;
 
         // Have to make a consumer that will wait for this test
         consumer = new heimdallrClient.Consumer('valid-token');
-        consumer.on('heardControl', function(){
+        consumer.on('heardControl', function () {
             // Can't fully trust either
             assert(ready, 'sent control before authorization');
             assert(consumer.ready, 'sent control before ready');
@@ -274,28 +271,27 @@ describe('Heimdallr Consumer', function(){
         }).sendControl(validUUID, 'test', null);
 
         // Timing is everything
-        setTimeout(function(){
+        setTimeout(function () {
             ready = true;
             consumer.connect();
         }, 100);
     });
 
-    it('removes listener', function(done){
-        var heardControl = false,
-            count = 0;
+    it('removes listener', function (done) {
+        var count = 0;
 
-        consumer.on('heardControl', function(){
+        consumer.on('heardControl', function () {
             count++;
             consumer.removeListener('heardControl');
             consumer.sendControl(validUUID, 'ping', null);
-        }).on('pong', function(){
+        }).on('pong', function () {
             assert(count === 1, 'heard the wrong number of controls: ' + count);
             done();
         });
         consumer.sendControl(validUUID, 'test', null);
     });
 
-    after(function(){
+    after(function () {
         domain.exit();
     });
 });
