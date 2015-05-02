@@ -55,10 +55,44 @@ opts = parser.script('post-schemas')
     )
     .parse();
 
+function formatLine(uuid, message) {
+    return '    ' + uuid + ': ' + message + '\n';
+}
+
+function finished(results) {
+    var stdout = '',
+        stderr = '',
+        message,
+        uuid;
+
+    for (uuid in results) {
+        if (results.hasOwnProperty(uuid)) {
+            results[uuid].response = results[uuid].response || {};
+            if (results[uuid].error) {
+                stderr += formatLine(uuid, results[uuid].error);
+            } else if (results[uuid].response.statusCode >= 300) {
+                message = results[uuid].response.statusCode + ' ' +
+                    results[uuid].body;
+                stderr += formatLine(uuid, message);
+            } else {
+                stdout += formatLine(uuid, results[uuid].response.statusCode);
+            }
+        }
+    }
+
+    if (stdout) {
+        process.stdout.write('SUCCESS:\n' + stdout);
+    }
+
+    if (stderr) {
+        process.stderr.write('ERROR:\n' + stderr);
+    }
+}
+
 utils.setPrivate(opts);
 
 for (i = 0; i < opts.file.length; i++) {
     _.extend(packetSchemas, require(path.resolve(opts.file[i])));
 }
 
-utils.postSchemas(opts.token, opts.uuid, packetSchemas);
+utils.postSchemas(opts.token, opts.uuid, packetSchemas, finished);
