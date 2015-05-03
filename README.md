@@ -19,7 +19,7 @@ Then include a script tag with your HTML:
 Install [node](http://nodejs.org/) if you don't have it. Then grab the package using npm:
 
 ```bash
-npm install heimdallr-client -g --save
+npm install heimdallr-client -g
 ```
 
 The `-g` flag is optional but it gives you easy access to the post-schemas utility (see [Set Subtype Schemas](#set-subtype-schemas)). Then you just need to use require to include the module in your script:

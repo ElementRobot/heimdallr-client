@@ -7,7 +7,7 @@ Install [node](http://nodejs.org/) if you don't have it. Then make a directory f
 ```bash
 mkdir heimdallr-project
 cd heimdallr-project
-npm install heimdallr-client -g --save
+npm install heimdallr-client -g
 ```
 
 Now open a new file
