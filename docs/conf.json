@@ -3,7 +3,7 @@
     "readme": "./README.md",
     "recurse": true,
     "template": "./docs/templates",
-    "destination": "docs/heimdallr-client/0.0.3"
+    "destination": "docs/heimdallr-client/0.1.0"
   },
   "source": {
     "include": [
