@@ -1,7 +1,4 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.heimdallrClient = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
-module.exports = _dereq_('./lib/heimdallr-client.js');
-
-},{"./lib/heimdallr-client.js":2}],2:[function(_dereq_,module,exports){
 /** @module heimdallrClient */
 "use strict";
 
@@ -167,20 +164,21 @@ function onReady(fn) {
  * @return {module:heimdallrClient~Client} A new Heimdallr Client object.
  */
 function Client(token, options) {
-    var manager;
+    var manager,
+        self = this;
 
     // The autoConnect = false allows us to create a socket object that
     // doesn't try to immediately connect to the server.
     options = options || {};
     options.autoConnect = false;
-    manager = new io.Manager(this.url, options);
+    manager = new io.Manager(self.url, options);
 
-    this.ready = false;
-    this.readyCallbacks = [];
-    this.token = token;
-    this.connection = manager.socket(parseURL(this.url).pathname);
+    self.ready = false;
+    self.readyCallbacks = [];
+    self.token = token;
+    self.connection = manager.socket(parseURL(self.url).pathname);
 
-    this.connection.on('err', function (err) {
+    self.connection.on('err', function (err) {
         // Unfortunately we haven't come up with a good standard format for
         // errors on the server side and so for the time being they are coming
         // across in a variety of forms.
@@ -194,6 +192,21 @@ function Client(token, options) {
 
         throw new Error(err);
     });
+
+    self.connection.on('auth-success', function () {
+        self.readyCallbacks.map(function (fn) {
+            fn();
+        });
+        self.readyCallbacks = [];
+        self.ready = true;
+    });
+
+    self.connection.on('connect', function () {
+        self.connection.emit(
+            'authorize',
+            {token: self.token, authSource: self.authSource}
+        );
+    });
 }
 
 /**
@@ -205,20 +218,6 @@ function Client(token, options) {
  * @return {module:heimdallrClient~Client}
  */
 Client.prototype.connect = function connect() {
-    this.connection.on('connect', function () {
-        this.connection.emit(
-            'authorize',
-            {token: this.token, authSource: this.authSource}
-        );
-        this.connection.on('auth-success', function callReady() {
-            this.readyCallbacks.map(function (fn) {
-                fn();
-            });
-            this.readyCallbacks = [];
-            this.ready = true;
-        }.bind(this));
-    }.bind(this));
-
     this.connection.connect();
 
     return this;
@@ -271,7 +270,7 @@ Client.prototype.url = 'https://heimdallr.skyforge.co';
  * @prop {string} authSource - The auth backend to use. Possible values are
  *     'skyforge', 'heimdallr', and 'testing'.
  */
-Client.prototype.authSource = 'skyforge';
+Client.prototype.authSource = 'heimdallr';
 
 
 /**
@@ -384,6 +383,41 @@ function Consumer() {
 Consumer.prototype = Client.prototype;
 
 /**
+ * Send a control packet to a provider. Must adhere to the provider's
+ * JSONSchema for the subtype of the control packet.
+ * If <tt>persistent</tt> is truthy, a persistent field will be
+ * included along with the control packet data.
+ * The value of the persistent field will be a new UUID that can be used
+ * to signal the Heimdallr server that the control packet has been
+ * completed. To do so, the provider must send a <tt>'completed'</tt> event
+ * packet with UUID included in the data field. The control packet will be
+ * re-sent every time the provider re-connects to Heimdallr until
+ * the Heimdallr server has been told that it has been completed.
+ *
+ * @method
+ * @arg {string} uuid - Provider to send the control packet to.
+ * @arg {string} subtype - The control packet subtype.
+ * @arg {json} data - The control packet data.
+ * @arg {boolean} [persistent] - Whether or not the control
+ *     should persist.
+ * @return {module:heimdallrClient~Consumer}
+ */
+Consumer.prototype.sendControl = onReady(
+    function sendControl(uuid, subtype, data, persistent) {
+        var control = {
+            'provider': uuid,
+            'subtype': subtype,
+            'data': data
+        };
+
+        if (persistent) {
+            control.persistent = true;
+        }
+        this.connection.emit('control', control);
+    }
+);
+
+/**
  * Subscribe to a provider. A consumer must subscribe to a provider
  * before it receives event or sensor packets from the provider or can
  * send control packets to the provider.
@@ -450,41 +484,6 @@ Consumer.prototype.getState = onReady(function getState(uuid, subtypes) {
 });
 
 /**
- * Send a control packet to a provider. Must adhere to the provider's
- * JSONSchema for the subtype of the control packet.
- * If <tt>persistent</tt> is truthy, a persistent field will be
- * included along with the control packet data.
- * The value of the persistent field will be a new UUID that can be used
- * to signal the Heimdallr server that the control packet has been
- * completed. To do so, the provider must send a <tt>'completed'</tt> event
- * packet with UUID included in the data field. The control packet will be
- * re-sent every time the provider re-connects to Heimdallr until
- * the Heimdallr server has been told that it has been completed.
- *
- * @method
- * @arg {string} uuid - Provider to send the control packet to.
- * @arg {string} subtype - The control packet subtype.
- * @arg {json} data - The control packet data.
- * @arg {boolean} [persistent] - Whether or not the control
- *     should persist.
- * @return {module:heimdallrClient~Consumer}
- */
-Consumer.prototype.sendControl = onReady(
-    function sendControl(uuid, subtype, data, persistent) {
-        var control = {
-            'subtype': subtype,
-            'data': data,
-            'provider': uuid
-        };
-
-        if (persistent) {
-            control.persistent = true;
-        }
-        this.connection.emit('control', control);
-    }
-);
-
-/**
  * Join binary data stream from a provider. If this is the first
  * consumer to join the stream from a provider, the Heimdallr server
  * will send a <tt>{"stream": "start"}</tt> control packet to the provider.
@@ -515,7 +514,7 @@ module.exports = {
     Provider: Provider,
     Consumer: Consumer
 };
-},{"socket.io-client":8,"url":7}],3:[function(_dereq_,module,exports){
+},{"socket.io-client":7,"url":6}],2:[function(_dereq_,module,exports){
 (function (global){
 /*! http://mths.be/punycode v1.2.4 by @mathias */
 ;(function(root) {
@@ -1026,7 +1025,7 @@ module.exports = {
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],4:[function(_dereq_,module,exports){
+},{}],3:[function(_dereq_,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1112,7 +1111,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],5:[function(_dereq_,module,exports){
+},{}],4:[function(_dereq_,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1199,13 +1198,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],6:[function(_dereq_,module,exports){
+},{}],5:[function(_dereq_,module,exports){
 'use strict';
 
 exports.decode = exports.parse = _dereq_('./decode');
 exports.encode = exports.stringify = _dereq_('./encode');
 
-},{"./decode":4,"./encode":5}],7:[function(_dereq_,module,exports){
+},{"./decode":3,"./encode":4}],6:[function(_dereq_,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -1914,11 +1913,11 @@ function isNullOrUndefined(arg) {
   return  arg == null;
 }
 
-},{"punycode":3,"querystring":6}],8:[function(_dereq_,module,exports){
+},{"punycode":2,"querystring":5}],7:[function(_dereq_,module,exports){
 
 module.exports = _dereq_('./lib/');
 
-},{"./lib/":9}],9:[function(_dereq_,module,exports){
+},{"./lib/":8}],8:[function(_dereq_,module,exports){
 
 /**
  * Module dependencies.
@@ -2007,7 +2006,7 @@ exports.connect = lookup;
 exports.Manager = _dereq_('./manager');
 exports.Socket = _dereq_('./socket');
 
-},{"./manager":10,"./socket":12,"./url":13,"debug":17,"socket.io-parser":53}],10:[function(_dereq_,module,exports){
+},{"./manager":9,"./socket":11,"./url":12,"debug":16,"socket.io-parser":52}],9:[function(_dereq_,module,exports){
 
 /**
  * Module dependencies.
@@ -2512,7 +2511,7 @@ Manager.prototype.onreconnect = function(){
   this.emitAll('reconnect', attempt);
 };
 
-},{"./on":11,"./socket":12,"./url":13,"backo2":14,"component-bind":15,"component-emitter":16,"debug":17,"engine.io-client":18,"indexof":49,"object-component":50,"socket.io-parser":53}],11:[function(_dereq_,module,exports){
+},{"./on":10,"./socket":11,"./url":12,"backo2":13,"component-bind":14,"component-emitter":15,"debug":16,"engine.io-client":17,"indexof":48,"object-component":49,"socket.io-parser":52}],10:[function(_dereq_,module,exports){
 
 /**
  * Module exports.
@@ -2538,7 +2537,7 @@ function on(obj, ev, fn) {
   };
 }
 
-},{}],12:[function(_dereq_,module,exports){
+},{}],11:[function(_dereq_,module,exports){
 
 /**
  * Module dependencies.
@@ -2925,7 +2924,7 @@ Socket.prototype.disconnect = function(){
   return this;
 };
 
-},{"./on":11,"component-bind":15,"component-emitter":16,"debug":17,"has-binary":47,"socket.io-parser":53,"to-array":57}],13:[function(_dereq_,module,exports){
+},{"./on":10,"component-bind":14,"component-emitter":15,"debug":16,"has-binary":46,"socket.io-parser":52,"to-array":56}],12:[function(_dereq_,module,exports){
 (function (global){
 
 /**
@@ -3002,7 +3001,7 @@ function url(uri, loc){
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"debug":17,"parseuri":51}],14:[function(_dereq_,module,exports){
+},{"debug":16,"parseuri":50}],13:[function(_dereq_,module,exports){
 
 /**
  * Expose `Backoff`.
@@ -3089,7 +3088,7 @@ Backoff.prototype.setJitter = function(jitter){
 };
 
 
-},{}],15:[function(_dereq_,module,exports){
+},{}],14:[function(_dereq_,module,exports){
 /**
  * Slice reference.
  */
@@ -3114,7 +3113,7 @@ module.exports = function(obj, fn){
   }
 };
 
-},{}],16:[function(_dereq_,module,exports){
+},{}],15:[function(_dereq_,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -3280,7 +3279,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],17:[function(_dereq_,module,exports){
+},{}],16:[function(_dereq_,module,exports){
 
 /**
  * Expose `debug()` as the module.
@@ -3419,11 +3418,11 @@ try {
   if (window.localStorage) debug.enable(localStorage.debug);
 } catch(e){}
 
-},{}],18:[function(_dereq_,module,exports){
+},{}],17:[function(_dereq_,module,exports){
 
 module.exports =  _dereq_('./lib/');
 
-},{"./lib/":19}],19:[function(_dereq_,module,exports){
+},{"./lib/":18}],18:[function(_dereq_,module,exports){
 
 module.exports = _dereq_('./socket');
 
@@ -3435,7 +3434,7 @@ module.exports = _dereq_('./socket');
  */
 module.exports.parser = _dereq_('engine.io-parser');
 
-},{"./socket":20,"engine.io-parser":32}],20:[function(_dereq_,module,exports){
+},{"./socket":19,"engine.io-parser":31}],19:[function(_dereq_,module,exports){
 (function (global){
 /**
  * Module dependencies.
@@ -4144,7 +4143,7 @@ Socket.prototype.filterUpgrades = function (upgrades) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./transport":21,"./transports":22,"component-emitter":16,"debug":29,"engine.io-parser":32,"indexof":49,"parsejson":43,"parseqs":44,"parseuri":45}],21:[function(_dereq_,module,exports){
+},{"./transport":20,"./transports":21,"component-emitter":15,"debug":28,"engine.io-parser":31,"indexof":48,"parsejson":42,"parseqs":43,"parseuri":44}],20:[function(_dereq_,module,exports){
 /**
  * Module dependencies.
  */
@@ -4305,7 +4304,7 @@ Transport.prototype.onClose = function () {
   this.emit('close');
 };
 
-},{"component-emitter":16,"engine.io-parser":32}],22:[function(_dereq_,module,exports){
+},{"component-emitter":15,"engine.io-parser":31}],21:[function(_dereq_,module,exports){
 (function (global){
 /**
  * Module dependencies
@@ -4362,7 +4361,7 @@ function polling(opts){
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./polling-jsonp":23,"./polling-xhr":24,"./websocket":26,"xmlhttprequest":27}],23:[function(_dereq_,module,exports){
+},{"./polling-jsonp":22,"./polling-xhr":23,"./websocket":25,"xmlhttprequest":26}],22:[function(_dereq_,module,exports){
 (function (global){
 
 /**
@@ -4599,7 +4598,7 @@ JSONPPolling.prototype.doWrite = function (data, fn) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./polling":25,"component-inherit":28}],24:[function(_dereq_,module,exports){
+},{"./polling":24,"component-inherit":27}],23:[function(_dereq_,module,exports){
 (function (global){
 /**
  * Module requirements.
@@ -4987,7 +4986,7 @@ function unloadHandler() {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./polling":25,"component-emitter":16,"component-inherit":28,"debug":29,"xmlhttprequest":27}],25:[function(_dereq_,module,exports){
+},{"./polling":24,"component-emitter":15,"component-inherit":27,"debug":28,"xmlhttprequest":26}],24:[function(_dereq_,module,exports){
 /**
  * Module dependencies.
  */
@@ -5234,7 +5233,7 @@ Polling.prototype.uri = function(){
   return schema + '://' + this.hostname + port + this.path + query;
 };
 
-},{"../transport":21,"component-inherit":28,"debug":29,"engine.io-parser":32,"parseqs":44,"xmlhttprequest":27}],26:[function(_dereq_,module,exports){
+},{"../transport":20,"component-inherit":27,"debug":28,"engine.io-parser":31,"parseqs":43,"xmlhttprequest":26}],25:[function(_dereq_,module,exports){
 /**
  * Module dependencies.
  */
@@ -5474,7 +5473,7 @@ WS.prototype.check = function(){
   return !!WebSocket && !('__initialize' in WebSocket && this.name === WS.prototype.name);
 };
 
-},{"../transport":21,"component-inherit":28,"debug":29,"engine.io-parser":32,"parseqs":44,"ws":46}],27:[function(_dereq_,module,exports){
+},{"../transport":20,"component-inherit":27,"debug":28,"engine.io-parser":31,"parseqs":43,"ws":45}],26:[function(_dereq_,module,exports){
 // browser shim for xmlhttprequest module
 var hasCORS = _dereq_('has-cors');
 
@@ -5512,7 +5511,7 @@ module.exports = function(opts) {
   }
 }
 
-},{"has-cors":41}],28:[function(_dereq_,module,exports){
+},{"has-cors":40}],27:[function(_dereq_,module,exports){
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -5520,7 +5519,7 @@ module.exports = function(a, b){
   a.prototype = new fn;
   a.prototype.constructor = a;
 };
-},{}],29:[function(_dereq_,module,exports){
+},{}],28:[function(_dereq_,module,exports){
 
 /**
  * This is the web browser implementation of `debug()`.
@@ -5669,7 +5668,7 @@ function load() {
 
 exports.enable(load());
 
-},{"./debug":30}],30:[function(_dereq_,module,exports){
+},{"./debug":29}],29:[function(_dereq_,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -5868,7 +5867,7 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":31}],31:[function(_dereq_,module,exports){
+},{"ms":30}],30:[function(_dereq_,module,exports){
 /**
  * Helpers.
  */
@@ -5981,7 +5980,7 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's';
 }
 
-},{}],32:[function(_dereq_,module,exports){
+},{}],31:[function(_dereq_,module,exports){
 (function (global){
 /**
  * Module dependencies.
@@ -6579,7 +6578,7 @@ exports.decodePayloadAsBinary = function (data, binaryType, callback) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./keys":33,"after":34,"arraybuffer.slice":35,"base64-arraybuffer":36,"blob":37,"has-binary":38,"utf8":40}],33:[function(_dereq_,module,exports){
+},{"./keys":32,"after":33,"arraybuffer.slice":34,"base64-arraybuffer":35,"blob":36,"has-binary":37,"utf8":39}],32:[function(_dereq_,module,exports){
 
 /**
  * Gets the keys for an object.
@@ -6600,7 +6599,7 @@ module.exports = Object.keys || function keys (obj){
   return arr;
 };
 
-},{}],34:[function(_dereq_,module,exports){
+},{}],33:[function(_dereq_,module,exports){
 module.exports = after
 
 function after(count, callback, err_cb) {
@@ -6630,7 +6629,7 @@ function after(count, callback, err_cb) {
 
 function noop() {}
 
-},{}],35:[function(_dereq_,module,exports){
+},{}],34:[function(_dereq_,module,exports){
 /**
  * An abstraction for slicing an arraybuffer even when
  * ArrayBuffer.prototype.slice is not supported
@@ -6661,7 +6660,7 @@ module.exports = function(arraybuffer, start, end) {
   return result.buffer;
 };
 
-},{}],36:[function(_dereq_,module,exports){
+},{}],35:[function(_dereq_,module,exports){
 /*
  * base64-arraybuffer
  * https://github.com/niklasvh/base64-arraybuffer
@@ -6722,7 +6721,7 @@ module.exports = function(arraybuffer, start, end) {
   };
 })("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
 
-},{}],37:[function(_dereq_,module,exports){
+},{}],36:[function(_dereq_,module,exports){
 (function (global){
 /**
  * Create a blob builder even when vendor prefixes exist
@@ -6775,7 +6774,7 @@ module.exports = (function() {
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],38:[function(_dereq_,module,exports){
+},{}],37:[function(_dereq_,module,exports){
 (function (global){
 
 /*
@@ -6837,12 +6836,12 @@ function hasBinary(data) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"isarray":39}],39:[function(_dereq_,module,exports){
+},{"isarray":38}],38:[function(_dereq_,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],40:[function(_dereq_,module,exports){
+},{}],39:[function(_dereq_,module,exports){
 (function (global){
 /*! http://mths.be/utf8js v2.0.0 by @mathias */
 ;(function(root) {
@@ -7085,7 +7084,7 @@ module.exports = Array.isArray || function (arr) {
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],41:[function(_dereq_,module,exports){
+},{}],40:[function(_dereq_,module,exports){
 
 /**
  * Module dependencies.
@@ -7110,7 +7109,7 @@ try {
   module.exports = false;
 }
 
-},{"global":42}],42:[function(_dereq_,module,exports){
+},{"global":41}],41:[function(_dereq_,module,exports){
 
 /**
  * Returns `this`. Execute this without a "context" (i.e. without it being
@@ -7120,7 +7119,7 @@ try {
 
 module.exports = (function () { return this; })();
 
-},{}],43:[function(_dereq_,module,exports){
+},{}],42:[function(_dereq_,module,exports){
 (function (global){
 /**
  * JSON parse.
@@ -7155,7 +7154,7 @@ module.exports = function parsejson(data) {
   }
 };
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],44:[function(_dereq_,module,exports){
+},{}],43:[function(_dereq_,module,exports){
 /**
  * Compiles a querystring
  * Returns string representation of the object
@@ -7194,7 +7193,7 @@ exports.decode = function(qs){
   return qry;
 };
 
-},{}],45:[function(_dereq_,module,exports){
+},{}],44:[function(_dereq_,module,exports){
 /**
  * Parses an URI
  *
@@ -7235,7 +7234,7 @@ module.exports = function parseuri(str) {
     return uri;
 };
 
-},{}],46:[function(_dereq_,module,exports){
+},{}],45:[function(_dereq_,module,exports){
 
 /**
  * Module dependencies.
@@ -7280,7 +7279,7 @@ function ws(uri, protocols, opts) {
 
 if (WebSocket) ws.prototype = WebSocket.prototype;
 
-},{}],47:[function(_dereq_,module,exports){
+},{}],46:[function(_dereq_,module,exports){
 (function (global){
 
 /*
@@ -7342,9 +7341,9 @@ function hasBinary(data) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"isarray":48}],48:[function(_dereq_,module,exports){
-arguments[4][39][0].apply(exports,arguments)
-},{"dup":39}],49:[function(_dereq_,module,exports){
+},{"isarray":47}],47:[function(_dereq_,module,exports){
+arguments[4][38][0].apply(exports,arguments)
+},{"dup":38}],48:[function(_dereq_,module,exports){
 
 var indexOf = [].indexOf;
 
@@ -7355,7 +7354,7 @@ module.exports = function(arr, obj){
   }
   return -1;
 };
-},{}],50:[function(_dereq_,module,exports){
+},{}],49:[function(_dereq_,module,exports){
 
 /**
  * HOP ref.
@@ -7440,7 +7439,7 @@ exports.length = function(obj){
 exports.isEmpty = function(obj){
   return 0 == exports.length(obj);
 };
-},{}],51:[function(_dereq_,module,exports){
+},{}],50:[function(_dereq_,module,exports){
 /**
  * Parses an URI
  *
@@ -7467,7 +7466,7 @@ module.exports = function parseuri(str) {
   return uri;
 };
 
-},{}],52:[function(_dereq_,module,exports){
+},{}],51:[function(_dereq_,module,exports){
 (function (global){
 /*global Blob,File*/
 
@@ -7612,7 +7611,7 @@ exports.removeBlobs = function(data, callback) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./is-buffer":54,"isarray":55}],53:[function(_dereq_,module,exports){
+},{"./is-buffer":53,"isarray":54}],52:[function(_dereq_,module,exports){
 
 /**
  * Module dependencies.
@@ -8014,7 +8013,7 @@ function error(data){
   };
 }
 
-},{"./binary":52,"./is-buffer":54,"component-emitter":16,"debug":17,"isarray":55,"json3":56}],54:[function(_dereq_,module,exports){
+},{"./binary":51,"./is-buffer":53,"component-emitter":15,"debug":16,"isarray":54,"json3":55}],53:[function(_dereq_,module,exports){
 (function (global){
 
 module.exports = isBuf;
@@ -8031,9 +8030,9 @@ function isBuf(obj) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],55:[function(_dereq_,module,exports){
-arguments[4][39][0].apply(exports,arguments)
-},{"dup":39}],56:[function(_dereq_,module,exports){
+},{}],54:[function(_dereq_,module,exports){
+arguments[4][38][0].apply(exports,arguments)
+},{"dup":38}],55:[function(_dereq_,module,exports){
 /*! JSON v3.2.6 | http://bestiejs.github.io/json3 | Copyright 2012-2013, Kit Cambridge | http://kit.mit-license.org */
 ;(function (window) {
   // Convenience aliases.
@@ -8896,7 +8895,7 @@ arguments[4][39][0].apply(exports,arguments)
   }
 }(this));
 
-},{}],57:[function(_dereq_,module,exports){
+},{}],56:[function(_dereq_,module,exports){
 module.exports = toArray
 
 function toArray(list, index) {

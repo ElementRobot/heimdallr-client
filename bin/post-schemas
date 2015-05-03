@@ -1,0 +1,99 @@
+#!/usr/bin/env node
+"use strict";
+
+var parser = require('nomnom'),
+    _ = require('underscore'),
+    path = require('path'),
+    utils = require('../lib').utils;
+
+var opts,
+    i,
+    temp,
+    packetSchemas = {};
+
+opts = parser.script('post-schemas')
+    .options({
+        token: {
+            abbr: 't',
+            position: 0,
+            required: true,
+            help: 'Authentication token'
+        },
+        uuid: {
+            abbr: 'u',
+            list: true,
+            required: true,
+            help: 'UUID(s) of the providers that the schemas are for'
+        },
+        file: {
+            abbr: 'f',
+            list: true,
+            required: true,
+            help: 'File(s) containing the packet schemas'
+        },
+        authSource: {
+            abbr: 'a',
+            full: 'auth-source',
+            hidden: true
+        },
+        url: {
+            hidden: true
+        }
+    })
+    .help(
+        'Command line utility for posting packet schemas to ' +
+            'the Heimdallr server. Options that can take multiple ' +
+            'values should be specified multiple times (e.g. -f ' +
+            'events.json -f controls.json ...). The files ' +
+            'should be .json files containing a single JSON ' +
+            'object. The top-level keys should be one or more ' +
+            'of "event", "sensor", and "control". The value of ' +
+            'these fields should be a JSON object whose keys ' +
+            'are the names of the packet subtypes and whose ' +
+            'values are valid JSON schema. See ' +
+            'http://elementrobot.github.io/heimdallr-client ' +
+            'for more help.'
+    )
+    .parse();
+
+function formatLine(uuid, message) {
+    return '    ' + uuid + ': ' + message + '\n';
+}
+
+function finished(results) {
+    var stdout = '',
+        stderr = '',
+        message,
+        uuid;
+
+    for (uuid in results) {
+        if (results.hasOwnProperty(uuid)) {
+            results[uuid].response = results[uuid].response || {};
+            if (results[uuid].error) {
+                stderr += formatLine(uuid, results[uuid].error);
+            } else if (results[uuid].response.statusCode >= 300) {
+                message = results[uuid].response.statusCode + ' ' +
+                    results[uuid].body;
+                stderr += formatLine(uuid, message);
+            } else {
+                stdout += formatLine(uuid, results[uuid].response.statusCode);
+            }
+        }
+    }
+
+    if (stdout) {
+        process.stdout.write('SUCCESS:\n' + stdout);
+    }
+
+    if (stderr) {
+        process.stderr.write('ERROR:\n' + stderr);
+    }
+}
+
+utils.setPrivate(opts);
+
+for (i = 0; i < opts.file.length; i++) {
+    _.extend(packetSchemas, require(path.resolve(opts.file[i])));
+}
+
+utils.postSchemas(opts.token, opts.uuid, packetSchemas, finished);

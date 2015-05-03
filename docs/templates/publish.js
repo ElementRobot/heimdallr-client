@@ -20,7 +20,7 @@ var view;
 
 var outdir = path.normalize(env.opts.destination);
 
-function linkto(){
+function linkto() {
     arguments[1] = arguments[1].replace('module:', '');
     return helper.linkto.apply(undefined, arguments);
 }
@@ -30,7 +30,15 @@ function find(spec) {
 }
 
 function tutoriallink(tutorial) {
-    return helper.toTutorial(tutorial, null, { tag: 'em', classname: 'disabled', prefix: 'Tutorial: ' });
+    var words = tutorial.split('-'),
+        i;
+
+    for (i = 0; i < words.length; i++) {
+        words[i] = words[i][0].toUpperCase() + words[i].slice(1) + ' ';
+    }
+
+
+    return helper.toTutorial(tutorial, words.join(' '), { tag: 'em', classname: 'disabled', prefix: 'Tutorial: ' });
 }
 
 function getAncestorLinks(doclet) {

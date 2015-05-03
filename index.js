@@ -1,1 +1,1 @@
-module.exports = require('./lib/heimdallr-client.js');
+module.exports = require('./lib');

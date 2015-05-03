@@ -21,11 +21,11 @@ var gulp = require('gulp'),
 
 
 // Browserify
-bundler = browserify('./index.js', {'standalone': 'heimdallr-client'});
+bundler = browserify('./lib/heimdallr-client.js', {'standalone': 'heimdallr-client'});
 // add any other browserify options or transforms here
 bundler.transform('brfs');
 
-gulp.task('default', ['tests', 'js', 'docs'], function () {
+gulp.task('default', ['tests', 'build', 'docs'], function () {
     // Hack because gulp wasn't exiting
     setTimeout(process.exit.bind(0));
 });
@@ -35,7 +35,7 @@ gulp.task('tests', function tests() {
         .pipe(mocha());
 });
 
-gulp.task('js', ['tests'], function js() {
+gulp.task('build', ['tests'], function build() {
     return bundler.bundle()
         .on('error', gutil.log.bind(gutil, 'Browserify Error'))  // log errors if they happen
         .pipe(source('heimdallr-client.js'))
