@@ -31,7 +31,9 @@
   ],
   "license": "MIT",
   "main": "index.js",
-  "bin": "bin/post-schemas",
+  "bin": {
+    "post-schemas": "bin/post-schemas"
+  },
   "scripts": {
     "test": "./node_modules/.bin/mocha ./tests/test.js"
   },
