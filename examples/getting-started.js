@@ -2,12 +2,12 @@
 
 var heimdallrClient = require('heimdallr-client'),
     tokens = {
-        consumer: '7c5ffd18-ed5c-4146-9610-5beabdd9099a',
-        provider: 'aac995a3-03f4-4f78-a793-fe7ec8d4f961'
+        consumer: <consumerToken>,
+        provider: <providerToken>
     },
     uuids = {
-        consumer: '19d1720c-9796-4ae9-aff3-1f3ed9b1fc3d',
-        provider: 'f2af84a5-b361-4875-bf5a-05fa9949facb'
+        consumer: <consumerUUID>,
+        provider: <providerUUID>
     },
     controlHandler,
     provider,
