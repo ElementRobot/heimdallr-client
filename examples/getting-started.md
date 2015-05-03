@@ -1,5 +1,5 @@
 ## Overview
-This tutorial should demonstrate most of the functionality of Heimdallr-Client. It will demonstrate using Heimdallr-Client in node.js. Heimdallr-Client can also be used in the browser and is available as a bower package. The authentication keys are fake so copy-pasting the code will not work. To get your own authentication keys just shoot us an [email](mailto:heimdallr@elementrobot.com).
+This tutorial should demonstrate most of the functionality of Heimdallr-Client. It will demonstrate using Heimdallr-Client in node.js. Heimdallr-Client can also be used in the browser and is available as a bower package. The UUIDs and authentication tokens in this walkthrough are placeholders and should be replaced with your own. To get your own authentication tokens just shoot us an [email](mailto:heimdallr@elementrobot.com).
 
 ## Getting Started
 Install [node](http://nodejs.org/) if you don't have it. Then make a directory for your Heimdallr project to live in and grab the node packages we will be using:
@@ -7,97 +7,59 @@ Install [node](http://nodejs.org/) if you don't have it. Then make a directory f
 ```bash
 mkdir heimdallr-project
 cd heimdallr-project
-npm install heimdallr-client request --save
+npm install heimdallr-client -g --save
 ```
 
 Now open a new file
 
 ```bash
-nano upload_schemas.js
+nano packet-schemas.json
 ```
 
-add the folowing code
+add the folowing
 
 
 ```javascript
-var request = require('request'),
-    tokens = {
-        consumer: '7c5ffd18-ed5c-4146-9610-5beabdd9099a',
-        provider: 'aac995a3-03f4-4f78-a793-fe7ec8d4f961'
+{
+    "event": {
+        "status": {"type": "string"},
+        "power": {"type": "boolean"}
     },
-    uuids = {
-        consumer: '19d1720c-9796-4ae9-aff3-1f3ed9b1fc3d',
-        provider: 'f2af84a5-b361-4875-bf5a-05fa9949facb'
-    },
-    schemas,
-    options,
-    packetType;
-
-schemas = {
-    event: {
-        status: {type: 'string'},
-        power: {type: 'boolean'}
-    },
-    sensor: {
-        temperature: {type: 'number'},
-        accelerometer: {
-            type: 'object',
-            properties: {
-                x: {type: 'number'},
-                y: {type: 'number'},
-                z: {type: 'number'}
+    "sensor": {
+        "temperature": {"type": "number"},
+        "accelerometer": {
+            "type": "object",
+            "properties": {
+                "x": {"type": "number"},
+                "y": {"type": "number"},
+                "z": {"type": "number"}
             }
         }
     },
-    control: {
-        turnLeft: {type: 'null'},
-        turnRight: {type: 'null'},
-        accelerate: {
-            type: 'object',
-            properties: {
-                direction: {type: 'string', enum: ['x', 'y', 'z']},
-                magnitude: {type: 'number'}
+    "control": {
+        "turnLeft": {"type": "null"},
+        "turnRight": {"type": "null"},
+        "accelerate": {
+            "type": "object",
+            "properties": {
+                "direction": {
+                    "type": "string",
+                    "enum": ["x", "y", "z"]
+                },
+                "magnitude": {"type": "number"}
             }
         }
-    }
-};
-
-function handleResponse(err, res) {
-    if (err) {
-        console.log('ERROR:', err);
-    }
-    if (res) {
-        console.log('STATUS:', res.statusCode);
-    }
-}
-
-options = {
-    url: 'https://heimdallr.skyforge.co/api/v1/provider/' + uuids.provider + '/subtype-schemas',
-    encoding: 'utf-8',
-    headers: {
-        'content-type': 'application/json',
-        'authorization': 'Token ' + tokens.consumer
-    },
-    json: true
-};
-
-for (packetType in schemas) {
-    if (schemas.hasOwnProperty(packetType)) {
-        options.body = {packetType: packetType, subtypeSchemas: schemas[packetType]};
-        request.post(options, handleResponse);
     }
 }
 ```
 
-close the file with Ctrl+X Y [return] and run it with
+close the file with Ctrl+X Y [return] and then run
 
 ```bash
-node upload_schemas.js
+post-schemas <consumerAuthToken> -u <providerUUID> -f ./packet-schemas.json
 
-# output
-# STATUS: 200
-# STATUS: 200
-# STATUS: 200
+# SUCCESS:
+#     <providerUUID>: 200
 ```
 
 What this does is tell the Heimdallr server what to expect for specific packet subtypes for a given provider. So now it knows that if it recieves an event packet with a status subtype that the data field should be a string. This is accomplished using [JSON Schema](http://json-schema.org/). If you haven't checked it out before, we strongly recommend doing so. A useful tool for getting acquainted with JSON schema is [JSON Schema Lint](http://jsonschemalint.com/). Schemas only need to be uploaded once per provider. New schemas can be uploaded at anytime. Keep in mind that any old schemas will be erased.
@@ -106,7 +68,7 @@ What this does is tell the Heimdallr server what to expect for specific packet s
 Now it's time to make a mock provider. The provider is a Heimdallr client that generates information. This information is sent to the Heimdallr server where it is stored. So make another file
 
 ```bash
-nano walkthrough.js
+nano getting-started.js
 ```
 
 add the following code
@@ -114,12 +76,12 @@ add the following code
 ```javascript
 var heimdallrClient = require('heimdallr-client'),
     tokens = {
-        consumer: '7c5ffd18-ed5c-4146-9610-5beabdd9099a',
-        provider: 'aac995a3-03f4-4f78-a793-fe7ec8d4f961'
+        consumer: <consumerToken>,
+        provider: <providerToken>
     },
     uuids = {
-        consumer: '19d1720c-9796-4ae9-aff3-1f3ed9b1fc3d',
-        provider: 'f2af84a5-b361-4875-bf5a-05fa9949facb'
+        consumer: <consumerUUID>,
+        provider: <providerUUID>
     },
     controlHandler,
     provider,
@@ -170,7 +132,7 @@ provider.connect();
 close the file with Ctrl+X Y [return] and run it with
 
 ```bash
-node walkthrough.js
+node getting-started.js
 
 # output
 # PROVIDER: sending temperature
@@ -179,7 +141,7 @@ node walkthrough.js
 When you've had enough, hit Ctrl+C to make it stop. So that's cool and all but it isn't really doing anything. Next we are going to add a consumer to the mix to make it a little more interesting.
 
 ## Create a Consumer
-A consumer is a Heimdallr client that listens for information from providers. A consumer can also send controls to a provider. To see this in action append the following code to your walkthrough.js file
+A consumer is a Heimdallr client that listens for information from providers. A consumer can also send controls to a provider. To see this in action append the following code to your getting-started.js file
 
 ```javascript
 // Make a new consumer
@@ -220,9 +182,8 @@ setTimeout(function () {
 and run it with
 
 ```bash
-node walkthrough.js
+node getting-started.js
 
-# output
 # PROVIDER: sending temperature
 # full power
 # RECVD accelerometer: { x: 10, y: 0, z: 0 }
